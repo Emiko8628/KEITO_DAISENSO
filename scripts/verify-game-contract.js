@@ -13,9 +13,9 @@ const requiredEnemySprites = [
   { name: "わちゃわちゃトリオ", file: "assets/enemy-wachawacha-trio.png" }
 ];
 const requiredAllySprites = [
-  { name: "ねこ", file: "assets/ally-neko.png", buttonId: "spawnNeko", buttonText: "ねこ 50" },
-  { name: "タンクねこ", file: "assets/ally-tank-neko.png", buttonId: "spawnTank", buttonText: "タンクねこ 80" },
-  { name: "バトルねこ", file: "assets/ally-battle-neko.png", buttonId: "spawnBattle", buttonText: "バトルねこ 110" }
+  { name: "まるねこ", file: "assets/ally-neko.png", buttonId: "spawnNeko", buttonText: "まるねこ 50" },
+  { name: "かたいねこ", file: "assets/ally-tank-neko.png", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
+  { name: "こうげきねこ", file: "assets/ally-battle-neko.png", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" }
 ];
 
 function numberConstant(name) {

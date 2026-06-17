@@ -175,9 +175,9 @@ button:disabled {
   <section class="game-shell" aria-label="ゲーム画面">
     <canvas id="game" width="960" height="480"></canvas>
     <div class="controls">
-      <button id="spawnNeko">ねこ 50</button>
-      <button id="spawnTank">タンクねこ 80</button>
-      <button id="spawnBattle">バトルねこ 110</button>
+      <button id="spawnNeko">まるねこ 50</button>
+      <button id="spawnTank">かたいねこ 80</button>
+      <button id="spawnBattle">こうげきねこ 110</button>
       <button id="restart">リスタート</button>
     </div>
     <div class="message" id="message">
@@ -214,7 +214,7 @@ button:disabled {
 
   const UNIT_TYPES = {
     neko: {
-      label: "ねこ",
+      label: "まるねこ",
       cost: 50,
       hp: 90,
       attack: 18,
@@ -228,7 +228,7 @@ button:disabled {
       spriteHeight: 56
     },
     tank: {
-      label: "タンクねこ",
+      label: "かたいねこ",
       cost: 80,
       hp: 160,
       attack: 8,
@@ -242,7 +242,7 @@ button:disabled {
       spriteHeight: 70
     },
     battle: {
-      label: "バトルねこ",
+      label: "こうげきねこ",
       cost: 110,
       hp: 105,
       attack: 36,

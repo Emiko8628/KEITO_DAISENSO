@@ -12,6 +12,11 @@ const requiredEnemySprites = [
   { name: "にょろゴースト", file: "assets/enemy-nyoro-ghost.png" },
   { name: "わちゃわちゃトリオ", file: "assets/enemy-wachawacha-trio.png" }
 ];
+const requiredAllySprites = [
+  { name: "ねこ", file: "assets/ally-neko.png", buttonId: "spawnNeko", buttonText: "ねこ 50" },
+  { name: "タンクねこ", file: "assets/ally-tank-neko.png", buttonId: "spawnTank", buttonText: "タンクねこ 80" },
+  { name: "バトルねこ", file: "assets/ally-battle-neko.png", buttonId: "spawnBattle", buttonText: "バトルねこ 110" }
+];
 
 function numberConstant(name) {
   const match = script.match(new RegExp(`const ${name} = ([^;]+);`));
@@ -92,6 +97,23 @@ for (const sprite of requiredEnemySprites) {
   contains(script, `label: "${sprite.name}"`, `${sprite.name} enemy label`);
   contains(script, `sprite: "${sprite.file}"`, `${sprite.name} enemy sprite`);
 }
+
+for (const sprite of requiredAllySprites) {
+  assert(
+    fs.existsSync(sprite.file),
+    `missing ally sprite asset: ${sprite.file}`
+  );
+  contains(script, `label: "${sprite.name}"`, `${sprite.name} ally label`);
+  contains(script, `sprite: "${sprite.file}"`, `${sprite.name} ally sprite`);
+  contains(html, `id="${sprite.buttonId}"`, `${sprite.name} summon button id`);
+  contains(html, `>${sprite.buttonText}</button>`, `${sprite.name} summon button text`);
+}
+
+contains(
+  script,
+  "function drawCharacterSprite",
+  "shared character sprite renderer"
+);
 
 contains(
   script,

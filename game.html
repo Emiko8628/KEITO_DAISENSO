@@ -175,8 +175,9 @@ button:disabled {
   <section class="game-shell" aria-label="ゲーム画面">
     <canvas id="game" width="960" height="480"></canvas>
     <div class="controls">
-      <button id="spawnGuard">まもり隊 50</button>
-      <button id="spawnRunner">とつげき隊 90</button>
+      <button id="spawnNeko">ねこ 50</button>
+      <button id="spawnTank">タンクねこ 80</button>
+      <button id="spawnBattle">バトルねこ 110</button>
       <button id="restart">リスタート</button>
     </div>
     <div class="message" id="message">
@@ -199,8 +200,9 @@ button:disabled {
     enemyBase: document.getElementById("enemyBase"),
     defeats: document.getElementById("defeats"),
     message: document.getElementById("message"),
-    spawnGuard: document.getElementById("spawnGuard"),
-    spawnRunner: document.getElementById("spawnRunner"),
+    spawnNeko: document.getElementById("spawnNeko"),
+    spawnTank: document.getElementById("spawnTank"),
+    spawnBattle: document.getElementById("spawnBattle"),
     restart: document.getElementById("restart")
   };
 
@@ -211,27 +213,47 @@ button:disabled {
   const ENEMY_BASE_X = 72;
 
   const UNIT_TYPES = {
-    guard: {
-      label: "まもり隊",
+    neko: {
+      label: "ねこ",
       cost: 50,
-      hp: 95,
+      hp: 90,
       attack: 18,
       range: 34,
-      speed: 0.72,
+      speed: 0.78,
       cooldown: 42,
       rewardOnWin: 0,
-      color: "#66d9ef"
+      color: "#66d9ef",
+      sprite: "assets/ally-neko.png",
+      spriteWidth: 54,
+      spriteHeight: 56
     },
-    runner: {
-      label: "とつげき隊",
-      cost: 90,
-      hp: 70,
-      attack: 30,
-      range: 28,
-      speed: 1.25,
-      cooldown: 54,
+    tank: {
+      label: "タンクねこ",
+      cost: 80,
+      hp: 160,
+      attack: 8,
+      range: 30,
+      speed: 0.42,
+      cooldown: 70,
       rewardOnWin: 0,
-      color: "#8ce99a"
+      color: "#74c0fc",
+      sprite: "assets/ally-tank-neko.png",
+      spriteWidth: 46,
+      spriteHeight: 70
+    },
+    battle: {
+      label: "バトルねこ",
+      cost: 110,
+      hp: 105,
+      attack: 36,
+      range: 32,
+      speed: 0.62,
+      cooldown: 58,
+      rewardOnWin: 0,
+      color: "#ffd43b",
+      sprite: "assets/ally-battle-neko.png",
+      spriteWidth: 64,
+      spriteHeight: 58
     }
   };
 
@@ -315,8 +337,8 @@ button:disabled {
       team,
       x,
       y: GROUND_Y,
-      width: team === "ally" ? 30 : type.spriteWidth || 32,
-      height: team === "ally" ? 44 : type.spriteHeight || 38,
+      width: type.spriteWidth || (team === "ally" ? 30 : 32),
+      height: type.spriteHeight || (team === "ally" ? 44 : 38),
       hp: type.hp,
       maxHp: type.hp,
       attack: type.attack,
@@ -367,9 +389,10 @@ button:disabled {
     return ENEMY_TYPES.pyoko;
   }
 
-  function loadEnemySprites() {
+  function loadCharacterSprites() {
     if (typeof Image === "undefined") return;
-    Object.values(ENEMY_TYPES).forEach((type) => {
+    [...Object.values(UNIT_TYPES), ...Object.values(ENEMY_TYPES)].forEach((type) => {
+      if (!type.sprite) return;
       const image = new Image();
       image.onload = () => {
         spriteCache.set(type.sprite, prepareSprite(image));
@@ -598,8 +621,9 @@ button:disabled {
     ui.message.innerHTML = state.gameOver
       ? `<strong>${state.message}</strong>`
       : state.message;
-    ui.spawnGuard.disabled = state.money < UNIT_TYPES.guard.cost || state.gameOver;
-    ui.spawnRunner.disabled = state.money < UNIT_TYPES.runner.cost || state.gameOver;
+    ui.spawnNeko.disabled = state.money < UNIT_TYPES.neko.cost || state.gameOver;
+    ui.spawnTank.disabled = state.money < UNIT_TYPES.tank.cost || state.gameOver;
+    ui.spawnBattle.disabled = state.money < UNIT_TYPES.battle.cost || state.gameOver;
   }
 
   function drawBackground() {
@@ -653,27 +677,16 @@ button:disabled {
     ctx.translate(fighter.x, fighter.y);
 
     ctx.fillStyle = pulse ? "#ffffff" : fighter.color;
-    if (fighter.team === "ally") {
-      ctx.beginPath();
-      ctx.roundRect(-fighter.width / 2, -fighter.height, fighter.width, fighter.height, 8);
-      ctx.fill();
-      ctx.fillStyle = "#0d1118";
-      ctx.fillRect(-8, -fighter.height + 12, 4, 4);
-      ctx.fillRect(5, -fighter.height + 12, 4, 4);
-      ctx.fillStyle = "#f6f7fb";
-      ctx.fillRect(9, -fighter.height + 24, 16, 5);
-    } else {
-      drawEnemySprite(fighter, pulse);
-    }
+    drawCharacterSprite(fighter, pulse);
 
     ctx.restore();
     drawHpBar(fighter.x - 18, fighter.y - fighter.height - 14, 36, 5, fighter.hp, fighter.maxHp);
   }
 
-  function drawEnemySprite(fighter, pulse) {
+  function drawCharacterSprite(fighter, pulse) {
     const sprite = fighter.sprite ? spriteCache.get(fighter.sprite) : null;
-    const drawWidth = fighter.spriteWidth || 36;
-    const drawHeight = fighter.spriteHeight || 42;
+    const drawWidth = fighter.spriteWidth || fighter.width;
+    const drawHeight = fighter.spriteHeight || fighter.height;
     if (sprite) {
       ctx.filter = pulse ? "brightness(1.7)" : "none";
       ctx.drawImage(sprite, -drawWidth / 2, -drawHeight, drawWidth, drawHeight);
@@ -681,6 +694,26 @@ button:disabled {
       return;
     }
 
+    if (fighter.team === "ally") {
+      drawAllyFallback(fighter);
+      return;
+    }
+
+    drawEnemyFallback(fighter);
+  }
+
+  function drawAllyFallback(fighter) {
+    ctx.beginPath();
+    ctx.roundRect(-fighter.width / 2, -fighter.height, fighter.width, fighter.height, 8);
+    ctx.fill();
+    ctx.fillStyle = "#0d1118";
+    ctx.fillRect(-8, -fighter.height + 12, 4, 4);
+    ctx.fillRect(5, -fighter.height + 12, 4, 4);
+    ctx.fillStyle = "#f6f7fb";
+    ctx.fillRect(9, -fighter.height + 24, 16, 5);
+  }
+
+  function drawEnemyFallback(fighter) {
     ctx.beginPath();
     ctx.arc(0, -fighter.height / 2, fighter.width / 2, 0, Math.PI * 2);
     ctx.fill();
@@ -741,11 +774,12 @@ button:disabled {
     requestAnimationFrame(loop);
   }
 
-  ui.spawnGuard.addEventListener("click", () => spawnUnit("guard"));
-  ui.spawnRunner.addEventListener("click", () => spawnUnit("runner"));
+  ui.spawnNeko.addEventListener("click", () => spawnUnit("neko"));
+  ui.spawnTank.addEventListener("click", () => spawnUnit("tank"));
+  ui.spawnBattle.addEventListener("click", () => spawnUnit("battle"));
   ui.restart.addEventListener("click", resetGame);
 
-  loadEnemySprites();
+  loadCharacterSprites();
   resetGame();
   requestAnimationFrame(loop);
 })();

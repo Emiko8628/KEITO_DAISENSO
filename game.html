@@ -235,13 +235,57 @@ button:disabled {
     }
   };
 
-  const ENEMY_TYPES = [
-    { label: "ころころ敵", hp: 42, attack: 8, range: 30, speed: 0.42, cooldown: 62, reward: 26, color: "#ff6b6b" },
-    { label: "がんばる敵", hp: 72, attack: 12, range: 34, speed: 0.3, cooldown: 76, reward: 40, color: "#f06595" }
+  const ENEMY_TYPES = {
+    pyoko: {
+      label: "ぴょこネコ",
+      hp: 38,
+      attack: 7,
+      range: 30,
+      speed: 0.5,
+      cooldown: 62,
+      reward: 24,
+      color: "#ff8787",
+      sprite: "assets/enemy-pyoko-neko.png",
+      spriteWidth: 58,
+      spriteHeight: 44
+    },
+    nyoro: {
+      label: "にょろゴースト",
+      hp: 76,
+      attack: 11,
+      range: 34,
+      speed: 0.28,
+      cooldown: 78,
+      reward: 42,
+      color: "#f06595",
+      sprite: "assets/enemy-nyoro-ghost.png",
+      spriteWidth: 46,
+      spriteHeight: 74
+    },
+    trio: {
+      label: "わちゃわちゃトリオ",
+      hp: 58,
+      attack: 13,
+      range: 36,
+      speed: 0.36,
+      cooldown: 72,
+      reward: 36,
+      color: "#ffa8a8",
+      sprite: "assets/enemy-wachawacha-trio.png",
+      spriteWidth: 68,
+      spriteHeight: 54
+    }
+  };
+
+  const ENEMY_SPAWN_TABLE = [
+    { kind: "pyoko", weight: 70 },
+    { kind: "nyoro", weight: 20 },
+    { kind: "trio", weight: 10 }
   ];
 
   let state;
   let lastTime = performance.now();
+  const spriteCache = new Map();
 
   function resetGame() {
     state = {
@@ -271,8 +315,8 @@ button:disabled {
       team,
       x,
       y: GROUND_Y,
-      width: team === "ally" ? 30 : 32,
-      height: team === "ally" ? 44 : 38,
+      width: team === "ally" ? 30 : type.spriteWidth || 32,
+      height: team === "ally" ? 44 : type.spriteHeight || 38,
       hp: type.hp,
       maxHp: type.hp,
       attack: type.attack,
@@ -282,6 +326,9 @@ button:disabled {
       cooldown: 0,
       reward: type.reward || 0,
       color: type.color,
+      sprite: type.sprite || null,
+      spriteWidth: type.spriteWidth || null,
+      spriteHeight: type.spriteHeight || null,
       hitFlash: 0
     };
   }
@@ -306,9 +353,128 @@ button:disabled {
 
   function spawnEnemy() {
     if (state.gameOver) return;
-    const waveLevel = Math.min(1, Math.floor(state.elapsed / 22000));
-    const type = ENEMY_TYPES[Math.random() < 0.86 - waveLevel * 0.12 ? 0 : 1];
+    const type = chooseEnemyType();
     state.enemies.push(createFighter("enemy", type, ENEMY_BASE_X + 24, "enemy"));
+  }
+
+  function chooseEnemyType() {
+    const totalWeight = ENEMY_SPAWN_TABLE.reduce((sum, entry) => sum + entry.weight, 0);
+    let roll = Math.random() * totalWeight;
+    for (const entry of ENEMY_SPAWN_TABLE) {
+      roll -= entry.weight;
+      if (roll <= 0) return ENEMY_TYPES[entry.kind];
+    }
+    return ENEMY_TYPES.pyoko;
+  }
+
+  function loadEnemySprites() {
+    if (typeof Image === "undefined") return;
+    Object.values(ENEMY_TYPES).forEach((type) => {
+      const image = new Image();
+      image.onload = () => {
+        spriteCache.set(type.sprite, prepareSprite(image));
+      };
+      image.onerror = () => {
+        spriteCache.set(type.sprite, null);
+      };
+      image.src = type.sprite;
+    });
+  }
+
+  function prepareSprite(image) {
+    const source = document.createElement("canvas");
+    source.width = image.naturalWidth || image.width;
+    source.height = image.naturalHeight || image.height;
+    const sourceCtx = source.getContext("2d");
+    sourceCtx.drawImage(image, 0, 0);
+
+    const imageData = sourceCtx.getImageData(0, 0, source.width, source.height);
+    const data = imageData.data;
+    const visited = new Uint8Array(source.width * source.height);
+    const queue = [];
+
+    const enqueue = (x, y) => {
+      if (x < 0 || y < 0 || x >= source.width || y >= source.height) return;
+      const index = y * source.width + x;
+      if (visited[index]) return;
+      const offset = index * 4;
+      if (!isBackgroundPixel(data[offset], data[offset + 1], data[offset + 2], data[offset + 3])) return;
+      visited[index] = 1;
+      queue.push(index);
+    };
+
+    for (let x = 0; x < source.width; x += 1) {
+      enqueue(x, 0);
+      enqueue(x, source.height - 1);
+    }
+    for (let y = 0; y < source.height; y += 1) {
+      enqueue(0, y);
+      enqueue(source.width - 1, y);
+    }
+
+    while (queue.length) {
+      const index = queue.shift();
+      const x = index % source.width;
+      const y = Math.floor(index / source.width);
+      enqueue(x + 1, y);
+      enqueue(x - 1, y);
+      enqueue(x, y + 1);
+      enqueue(x, y - 1);
+    }
+
+    for (let index = 0; index < visited.length; index += 1) {
+      if (visited[index]) data[index * 4 + 3] = 0;
+    }
+    sourceCtx.putImageData(imageData, 0, 0);
+
+    const bounds = findOpaqueBounds(imageData, source.width, source.height);
+    if (!bounds) return source;
+
+    const trimmed = document.createElement("canvas");
+    trimmed.width = bounds.width;
+    trimmed.height = bounds.height;
+    trimmed.getContext("2d").drawImage(
+      source,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      0,
+      0,
+      bounds.width,
+      bounds.height
+    );
+    return trimmed;
+  }
+
+  function isBackgroundPixel(r, g, b, a) {
+    const brightest = Math.max(r, g, b);
+    const darkest = Math.min(r, g, b);
+    return a < 12 || (brightest > 212 && brightest - darkest < 34);
+  }
+
+  function findOpaqueBounds(imageData, width, height) {
+    const data = imageData.data;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        if (data[(y * width + x) * 4 + 3] <= 0) continue;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+    if (maxX < minX || maxY < minY) return null;
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX + 1,
+      height: maxY - minY + 1
+    };
   }
 
   function findTarget(actor) {
@@ -497,18 +663,32 @@ button:disabled {
       ctx.fillStyle = "#f6f7fb";
       ctx.fillRect(9, -fighter.height + 24, 16, 5);
     } else {
-      ctx.beginPath();
-      ctx.arc(0, -fighter.height / 2, fighter.width / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#10131a";
-      ctx.fillRect(-9, -fighter.height / 2 - 6, 6, 6);
-      ctx.fillRect(4, -fighter.height / 2 - 6, 6, 6);
-      ctx.fillStyle = "#ffe3e3";
-      ctx.fillRect(-9, -fighter.height / 2 + 9, 18, 4);
+      drawEnemySprite(fighter, pulse);
     }
 
     ctx.restore();
     drawHpBar(fighter.x - 18, fighter.y - fighter.height - 14, 36, 5, fighter.hp, fighter.maxHp);
+  }
+
+  function drawEnemySprite(fighter, pulse) {
+    const sprite = fighter.sprite ? spriteCache.get(fighter.sprite) : null;
+    const drawWidth = fighter.spriteWidth || 36;
+    const drawHeight = fighter.spriteHeight || 42;
+    if (sprite) {
+      ctx.filter = pulse ? "brightness(1.7)" : "none";
+      ctx.drawImage(sprite, -drawWidth / 2, -drawHeight, drawWidth, drawHeight);
+      ctx.filter = "none";
+      return;
+    }
+
+    ctx.beginPath();
+    ctx.arc(0, -fighter.height / 2, fighter.width / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#10131a";
+    ctx.fillRect(-9, -fighter.height / 2 - 6, 6, 6);
+    ctx.fillRect(4, -fighter.height / 2 - 6, 6, 6);
+    ctx.fillStyle = "#ffe3e3";
+    ctx.fillRect(-9, -fighter.height / 2 + 9, 18, 4);
   }
 
   function drawHpBar(x, y, width, height, hp, maxHp) {
@@ -565,6 +745,7 @@ button:disabled {
   ui.spawnRunner.addEventListener("click", () => spawnUnit("runner"));
   ui.restart.addEventListener("click", resetGame);
 
+  loadEnemySprites();
   resetGame();
   requestAnimationFrame(loop);
 })();

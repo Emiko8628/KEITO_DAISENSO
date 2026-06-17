@@ -165,9 +165,9 @@ button:disabled {
       <p class="subtitle">1ステージだけのブラウザミニタワーディフェンス</p>
     </div>
     <section class="stats" aria-label="ゲーム状況">
-      <div class="stat"><span>お金</span><strong id="money">120</strong></div>
+      <div class="stat"><span>お金</span><strong id="money">180</strong></div>
       <div class="stat"><span>味方拠点</span><strong id="allyBase">100</strong></div>
-      <div class="stat"><span>敵拠点</span><strong id="enemyBase">100</strong></div>
+      <div class="stat"><span>敵拠点</span><strong id="enemyBase">70</strong></div>
       <div class="stat"><span>撃破数</span><strong id="defeats">0</strong></div>
     </section>
   </header>
@@ -180,7 +180,7 @@ button:disabled {
       <button id="restart">リスタート</button>
     </div>
     <div class="message" id="message">
-      ユニットを召喚して、敵の拠点を先に壊そう。
+      右の陣地からユニットを召喚して、左の敵拠点を先に壊そう。
     </div>
   </section>
 
@@ -207,17 +207,17 @@ button:disabled {
   const WIDTH = canvas.width;
   const HEIGHT = canvas.height;
   const GROUND_Y = 342;
-  const ALLY_BASE_X = 72;
-  const ENEMY_BASE_X = WIDTH - 112;
+  const ALLY_BASE_X = WIDTH - 112;
+  const ENEMY_BASE_X = 72;
 
   const UNIT_TYPES = {
     guard: {
       label: "まもり隊",
       cost: 50,
-      hp: 90,
-      attack: 14,
+      hp: 95,
+      attack: 18,
       range: 34,
-      speed: 0.55,
+      speed: 0.72,
       cooldown: 42,
       rewardOnWin: 0,
       color: "#66d9ef"
@@ -225,10 +225,10 @@ button:disabled {
     runner: {
       label: "とつげき隊",
       cost: 90,
-      hp: 62,
-      attack: 24,
+      hp: 70,
+      attack: 30,
       range: 28,
-      speed: 1.12,
+      speed: 1.25,
       cooldown: 54,
       rewardOnWin: 0,
       color: "#8ce99a"
@@ -236,8 +236,8 @@ button:disabled {
   };
 
   const ENEMY_TYPES = [
-    { label: "ころころ敵", hp: 56, attack: 10, range: 30, speed: 0.48, cooldown: 54, reward: 24, color: "#ff6b6b" },
-    { label: "がんばる敵", hp: 96, attack: 16, range: 34, speed: 0.34, cooldown: 68, reward: 38, color: "#f06595" }
+    { label: "ころころ敵", hp: 42, attack: 8, range: 30, speed: 0.42, cooldown: 62, reward: 26, color: "#ff6b6b" },
+    { label: "がんばる敵", hp: 72, attack: 12, range: 34, speed: 0.3, cooldown: 76, reward: 40, color: "#f06595" }
   ];
 
   let state;
@@ -245,19 +245,19 @@ button:disabled {
 
   function resetGame() {
     state = {
-      money: 120,
+      money: 180,
       allyBaseHp: 100,
-      enemyBaseHp: 100,
+      enemyBaseHp: 70,
       defeats: 0,
       units: [],
       enemies: [],
       floatingTexts: [],
       elapsed: 0,
-      enemySpawnTimer: 0,
+      enemySpawnTimer: 2600,
       incomeTimer: 0,
       gameOver: false,
       result: "playing",
-      message: "ユニットを召喚して、敵の拠点を先に壊そう。"
+      message: "右の陣地からユニットを召喚して、左の敵拠点を先に壊そう。"
     };
     lastTime = performance.now();
     updateUI();
@@ -299,7 +299,7 @@ button:disabled {
       updateUI();
       return;
     }
-    state.units.push(createFighter(kind, type, ALLY_BASE_X + 58, "ally"));
+    state.units.push(createFighter(kind, type, ALLY_BASE_X - 58, "ally"));
     state.message = `${type.label}を召喚した。`;
     updateUI();
   }
@@ -307,8 +307,8 @@ button:disabled {
   function spawnEnemy() {
     if (state.gameOver) return;
     const waveLevel = Math.min(1, Math.floor(state.elapsed / 22000));
-    const type = ENEMY_TYPES[Math.random() < 0.72 - waveLevel * 0.18 ? 0 : 1];
-    state.enemies.push(createFighter("enemy", type, ENEMY_BASE_X - 24, "enemy"));
+    const type = ENEMY_TYPES[Math.random() < 0.86 - waveLevel * 0.12 ? 0 : 1];
+    state.enemies.push(createFighter("enemy", type, ENEMY_BASE_X + 24, "enemy"));
   }
 
   function findTarget(actor) {
@@ -359,7 +359,7 @@ button:disabled {
 
     if (attackBase(actor)) return;
 
-    actor.x += actor.team === "ally" ? actor.speed * dt : -actor.speed * dt;
+    actor.x += actor.team === "ally" ? -actor.speed * dt : actor.speed * dt;
   }
 
   function addFloatingText(x, y, text, color) {
@@ -388,11 +388,11 @@ button:disabled {
 
     if (state.enemySpawnTimer <= 0) {
       spawnEnemy();
-      state.enemySpawnTimer = Math.max(1250, 2600 - state.elapsed * 0.015);
+      state.enemySpawnTimer = Math.max(3800, 5200 - state.elapsed * 0.01);
     }
 
     if (state.incomeTimer <= 0) {
-      state.money += 5;
+      state.money += 8;
       state.incomeTimer = 1000;
     }
 

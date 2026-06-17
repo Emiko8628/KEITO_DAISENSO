@@ -7,6 +7,11 @@ const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
 assert(scriptMatch, "game.html must include an inline script block");
 
 const script = scriptMatch[1];
+const requiredEnemySprites = [
+  { name: "ぴょこネコ", file: "assets/enemy-pyoko-neko.png" },
+  { name: "にょろゴースト", file: "assets/enemy-nyoro-ghost.png" },
+  { name: "わちゃわちゃトリオ", file: "assets/enemy-wachawacha-trio.png" }
+];
 
 function numberConstant(name) {
   const match = script.match(new RegExp(`const ${name} = ([^;]+);`));
@@ -71,6 +76,45 @@ contains(
   script,
   'actor.x += actor.team === "ally" ? -actor.speed * dt : actor.speed * dt;',
   "movement direction"
+);
+
+for (const sprite of requiredEnemySprites) {
+  assert(
+    fs.existsSync(sprite.file),
+    `missing enemy sprite asset: ${sprite.file}`
+  );
+  contains(script, `label: "${sprite.name}"`, `${sprite.name} enemy label`);
+  contains(script, `sprite: "${sprite.file}"`, `${sprite.name} enemy sprite`);
+}
+
+contains(
+  script,
+  "const ENEMY_SPAWN_TABLE = [",
+  "weighted enemy spawn table"
+);
+
+contains(
+  script,
+  '{ kind: "pyoko", weight: 70 }',
+  "ぴょこネコ spawn weight"
+);
+
+contains(
+  script,
+  '{ kind: "nyoro", weight: 20 }',
+  "にょろゴースト spawn weight"
+);
+
+contains(
+  script,
+  '{ kind: "trio", weight: 10 }',
+  "わちゃわちゃトリオ spawn weight"
+);
+
+contains(
+  script,
+  "function prepareSprite",
+  "runtime sprite background cleanup"
 );
 
 new Function(script);

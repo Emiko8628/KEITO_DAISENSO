@@ -43,6 +43,12 @@ assert(
 );
 
 assert.strictEqual(
+  enemyBaseX - 44,
+  960 - (allyBaseX + 44),
+  "player and enemy base label margins should be mirrored"
+);
+
+assert.strictEqual(
   stateNumber("enemyBaseHp"),
   70,
   "first course enemy base HP should be low enough for a quick first win"

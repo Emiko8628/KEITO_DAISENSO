@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEITO大戦争 - ミニタワーディフェンス</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #10131a;
+  --panel: #191f2b;
+  --panel-2: #222a38;
+  --line: #344052;
+  --text: #f6f7fb;
+  --muted: #b8c0cf;
+  --gold: #ffd166;
+  --blue: #66d9ef;
+  --red: #ff6b6b;
+  --green: #8ce99a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(102, 217, 239, 0.16), transparent 32rem),
+    linear-gradient(180deg, #151925 0%, var(--bg) 100%);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+.app {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 18px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 42px);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  gap: 8px;
+  min-width: min(520px, 100%);
+}
+
+.stat {
+  border: 1px solid var(--line);
+  background: rgba(25, 31, 43, 0.86);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 18px;
+}
+
+.game-shell {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0c1017;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #101923;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+button {
+  min-width: 150px;
+  border: 1px solid #46546a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover { border-color: var(--blue); }
+button:disabled {
+  cursor: not-allowed;
+  color: #7f8897;
+  border-color: #2a3343;
+  background: #161c27;
+}
+
+.message {
+  min-height: 40px;
+  padding: 10px 12px 14px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--panel);
+}
+
+.message strong { color: var(--gold); }
+
+.note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  header { display: block; }
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 14px;
+    min-width: 0;
+  }
+  button { flex: 1 1 150px; }
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div>
+      <h1>KEITO大戦争</h1>
+      <p class="subtitle">1ステージだけのブラウザミニタワーディフェンス</p>
+    </div>
+    <section class="stats" aria-label="ゲーム状況">
+      <div class="stat"><span>お金</span><strong id="money">120</strong></div>
+      <div class="stat"><span>味方拠点</span><strong id="allyBase">100</strong></div>
+      <div class="stat"><span>敵拠点</span><strong id="enemyBase">100</strong></div>
+      <div class="stat"><span>撃破数</span><strong id="defeats">0</strong></div>
+    </section>
+  </header>
+
+  <section class="game-shell" aria-label="ゲーム画面">
+    <canvas id="game" width="960" height="480"></canvas>
+    <div class="controls">
+      <button id="spawnGuard">まもり隊 50</button>
+      <button id="spawnRunner">とつげき隊 90</button>
+      <button id="restart">リスタート</button>
+    </div>
+    <div class="message" id="message">
+      ユニットを召喚して、敵の拠点を先に壊そう。
+    </div>
+  </section>
+
+  <p class="note">非公式ファン制作｜このページは外部通信・保存処理なしで動きます。</p>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const ui = {
+    money: document.getElementById("money"),
+    allyBase: document.getElementById("allyBase"),
+    enemyBase: document.getElementById("enemyBase"),
+    defeats: document.getElementById("defeats"),
+    message: document.getElementById("message"),
+    spawnGuard: document.getElementById("spawnGuard"),
+    spawnRunner: document.getElementById("spawnRunner"),
+    restart: document.getElementById("restart")
+  };
+
+  const WIDTH = canvas.width;
+  const HEIGHT = canvas.height;
+  const GROUND_Y = 342;
+  const ALLY_BASE_X = 72;
+  const ENEMY_BASE_X = WIDTH - 112;
+
+  const UNIT_TYPES = {
+    guard: {
+      label: "まもり隊",
+      cost: 50,
+      hp: 90,
+      attack: 14,
+      range: 34,
+      speed: 0.55,
+      cooldown: 42,
+      rewardOnWin: 0,
+      color: "#66d9ef"
+    },
+    runner: {
+      label: "とつげき隊",
+      cost: 90,
+      hp: 62,
+      attack: 24,
+      range: 28,
+      speed: 1.12,
+      cooldown: 54,
+      rewardOnWin: 0,
+      color: "#8ce99a"
+    }
+  };
+
+  const ENEMY_TYPES = [
+    { label: "ころころ敵", hp: 56, attack: 10, range: 30, speed: 0.48, cooldown: 54, reward: 24, color: "#ff6b6b" },
+    { label: "がんばる敵", hp: 96, attack: 16, range: 34, speed: 0.34, cooldown: 68, reward: 38, color: "#f06595" }
+  ];
+
+  let state;
+  let lastTime = performance.now();
+
+  function resetGame() {
+    state = {
+      money: 120,
+      allyBaseHp: 100,
+      enemyBaseHp: 100,
+      defeats: 0,
+      units: [],
+      enemies: [],
+      floatingTexts: [],
+      elapsed: 0,
+      enemySpawnTimer: 0,
+      incomeTimer: 0,
+      gameOver: false,
+      result: "playing",
+      message: "ユニットを召喚して、敵の拠点を先に壊そう。"
+    };
+    lastTime = performance.now();
+    updateUI();
+  }
+
+  function createFighter(kind, type, x, team) {
+    return {
+      id: crypto.randomUUID ? crypto.randomUUID() : `${team}-${Date.now()}-${Math.random()}`,
+      kind,
+      label: type.label,
+      team,
+      x,
+      y: GROUND_Y,
+      width: team === "ally" ? 30 : 32,
+      height: team === "ally" ? 44 : 38,
+      hp: type.hp,
+      maxHp: type.hp,
+      attack: type.attack,
+      range: type.range,
+      speed: type.speed,
+      cooldownMax: type.cooldown,
+      cooldown: 0,
+      reward: type.reward || 0,
+      color: type.color,
+      hitFlash: 0
+    };
+  }
+
+  function spendMoney(amount) {
+    if (state.money < amount || state.gameOver) return false;
+    state.money -= amount;
+    return true;
+  }
+
+  function spawnUnit(kind) {
+    const type = UNIT_TYPES[kind];
+    if (!spendMoney(type.cost)) {
+      state.message = state.gameOver ? state.message : "お金が足りない。敵を倒すか少し待とう。";
+      updateUI();
+      return;
+    }
+    state.units.push(createFighter(kind, type, ALLY_BASE_X + 58, "ally"));
+    state.message = `${type.label}を召喚した。`;
+    updateUI();
+  }
+
+  function spawnEnemy() {
+    if (state.gameOver) return;
+    const waveLevel = Math.min(1, Math.floor(state.elapsed / 22000));
+    const type = ENEMY_TYPES[Math.random() < 0.72 - waveLevel * 0.18 ? 0 : 1];
+    state.enemies.push(createFighter("enemy", type, ENEMY_BASE_X - 24, "enemy"));
+  }
+
+  function findTarget(actor) {
+    const opponents = actor.team === "ally" ? state.enemies : state.units;
+    let nearest = null;
+    let nearestDistance = Infinity;
+    for (const target of opponents) {
+      const distance = Math.abs(target.x - actor.x);
+      if (distance < nearestDistance) {
+        nearest = target;
+        nearestDistance = distance;
+      }
+    }
+    return { target: nearest, distance: nearestDistance };
+  }
+
+  function attackBase(actor) {
+    const baseX = actor.team === "ally" ? ENEMY_BASE_X : ALLY_BASE_X;
+    const distance = Math.abs(actor.x - baseX);
+    if (distance > actor.range + 26) return false;
+    if (actor.cooldown > 0) return true;
+
+    if (actor.team === "ally") {
+      state.enemyBaseHp = Math.max(0, state.enemyBaseHp - actor.attack);
+      addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ffd166");
+    } else {
+      state.allyBaseHp = Math.max(0, state.allyBaseHp - actor.attack);
+      addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ff8787");
+    }
+    actor.cooldown = actor.cooldownMax;
+    return true;
+  }
+
+  function updateFighter(actor, dt) {
+    actor.cooldown = Math.max(0, actor.cooldown - dt);
+    actor.hitFlash = Math.max(0, actor.hitFlash - dt);
+
+    const { target, distance } = findTarget(actor);
+    if (target && distance <= actor.range + target.width * 0.5) {
+      if (actor.cooldown <= 0) {
+        target.hp -= actor.attack;
+        target.hitFlash = 8;
+        actor.cooldown = actor.cooldownMax;
+        addFloatingText(target.x, target.y - target.height, `-${actor.attack}`, actor.team === "ally" ? "#ffd166" : "#ff8787");
+      }
+      return;
+    }
+
+    if (attackBase(actor)) return;
+
+    actor.x += actor.team === "ally" ? actor.speed * dt : -actor.speed * dt;
+  }
+
+  function addFloatingText(x, y, text, color) {
+    state.floatingTexts.push({ x, y, text, color, life: 52 });
+  }
+
+  function removeDefeated() {
+    state.enemies = state.enemies.filter((enemy) => {
+      if (enemy.hp > 0) return true;
+      state.money += enemy.reward;
+      state.defeats += 1;
+      addFloatingText(enemy.x, enemy.y - 48, `+${enemy.reward}`, "#8ce99a");
+      return false;
+    });
+
+    state.units = state.units.filter((unit) => unit.hp > 0);
+  }
+
+  function updateGame(deltaMs) {
+    const dt = Math.min(deltaMs / 16.67, 3);
+    if (state.gameOver) return;
+
+    state.elapsed += deltaMs;
+    state.enemySpawnTimer -= deltaMs;
+    state.incomeTimer -= deltaMs;
+
+    if (state.enemySpawnTimer <= 0) {
+      spawnEnemy();
+      state.enemySpawnTimer = Math.max(1250, 2600 - state.elapsed * 0.015);
+    }
+
+    if (state.incomeTimer <= 0) {
+      state.money += 5;
+      state.incomeTimer = 1000;
+    }
+
+    [...state.units, ...state.enemies].forEach((fighter) => updateFighter(fighter, dt));
+    removeDefeated();
+    updateFloatingTexts(dt);
+    checkResult();
+    updateUI();
+  }
+
+  function updateFloatingTexts(dt) {
+    state.floatingTexts.forEach((text) => {
+      text.y -= 0.42 * dt;
+      text.life -= dt;
+    });
+    state.floatingTexts = state.floatingTexts.filter((text) => text.life > 0);
+  }
+
+  function checkResult() {
+    if (state.enemyBaseHp <= 0) {
+      state.gameOver = true;
+      state.result = "win";
+      state.money += 120;
+      state.message = "ステージクリア。勝利ボーナス +120！";
+    } else if (state.allyBaseHp <= 0) {
+      state.gameOver = true;
+      state.result = "lose";
+      state.message = "味方拠点が壊された。もう一度作戦を立てよう。";
+    }
+  }
+
+  function updateUI() {
+    ui.money.textContent = Math.floor(state.money);
+    ui.allyBase.textContent = Math.ceil(state.allyBaseHp);
+    ui.enemyBase.textContent = Math.ceil(state.enemyBaseHp);
+    ui.defeats.textContent = state.defeats;
+    ui.message.innerHTML = state.gameOver
+      ? `<strong>${state.message}</strong>`
+      : state.message;
+    ui.spawnGuard.disabled = state.money < UNIT_TYPES.guard.cost || state.gameOver;
+    ui.spawnRunner.disabled = state.money < UNIT_TYPES.runner.cost || state.gameOver;
+  }
+
+  function drawBackground() {
+    const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+    sky.addColorStop(0, "#162132");
+    sky.addColorStop(0.66, "#111923");
+    sky.addColorStop(1, "#0d1118");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.fillStyle = "rgba(102, 217, 239, 0.08)";
+    for (let i = 0; i < 9; i += 1) {
+      const x = (i * 138 + (state.elapsed * 0.01)) % (WIDTH + 120) - 80;
+      ctx.beginPath();
+      ctx.arc(x, 90 + (i % 3) * 36, 28 + (i % 2) * 12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = "#263449";
+    ctx.fillRect(0, GROUND_Y + 34, WIDTH, HEIGHT - GROUND_Y);
+    ctx.fillStyle = "#33445e";
+    ctx.fillRect(0, GROUND_Y + 24, WIDTH, 18);
+
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 2;
+    for (let x = 0; x < WIDTH; x += 48) {
+      ctx.beginPath();
+      ctx.moveTo(x, GROUND_Y + 44);
+      ctx.lineTo(x + 22, HEIGHT);
+      ctx.stroke();
+    }
+  }
+
+  function drawBase(x, hp, team) {
+    const isAlly = team === "ally";
+    ctx.fillStyle = isAlly ? "#2b8a9f" : "#8f3d4f";
+    ctx.fillRect(x - 34, GROUND_Y - 82, 68, 106);
+    ctx.fillStyle = isAlly ? "#66d9ef" : "#ff6b6b";
+    ctx.fillRect(x - 44, GROUND_Y - 104, 88, 26);
+    ctx.fillStyle = "#f6f7fb";
+    ctx.font = "700 13px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(isAlly ? "HOME" : "BOSS", x, GROUND_Y - 86);
+
+    drawHpBar(x - 42, GROUND_Y - 124, 84, 9, hp, 100);
+  }
+
+  function drawFighter(fighter) {
+    const pulse = fighter.hitFlash > 0 ? 1 : 0;
+    ctx.save();
+    ctx.translate(fighter.x, fighter.y);
+
+    ctx.fillStyle = pulse ? "#ffffff" : fighter.color;
+    if (fighter.team === "ally") {
+      ctx.beginPath();
+      ctx.roundRect(-fighter.width / 2, -fighter.height, fighter.width, fighter.height, 8);
+      ctx.fill();
+      ctx.fillStyle = "#0d1118";
+      ctx.fillRect(-8, -fighter.height + 12, 4, 4);
+      ctx.fillRect(5, -fighter.height + 12, 4, 4);
+      ctx.fillStyle = "#f6f7fb";
+      ctx.fillRect(9, -fighter.height + 24, 16, 5);
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, -fighter.height / 2, fighter.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#10131a";
+      ctx.fillRect(-9, -fighter.height / 2 - 6, 6, 6);
+      ctx.fillRect(4, -fighter.height / 2 - 6, 6, 6);
+      ctx.fillStyle = "#ffe3e3";
+      ctx.fillRect(-9, -fighter.height / 2 + 9, 18, 4);
+    }
+
+    ctx.restore();
+    drawHpBar(fighter.x - 18, fighter.y - fighter.height - 14, 36, 5, fighter.hp, fighter.maxHp);
+  }
+
+  function drawHpBar(x, y, width, height, hp, maxHp) {
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(x, y, width, height);
+    ctx.fillStyle = hp / maxHp > 0.38 ? "#8ce99a" : "#ff8787";
+    ctx.fillRect(x, y, width * Math.max(0, hp / maxHp), height);
+  }
+
+  function drawFloatingTexts() {
+    ctx.font = "700 15px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    for (const text of state.floatingTexts) {
+      ctx.globalAlpha = Math.min(1, text.life / 18);
+      ctx.fillStyle = text.color;
+      ctx.fillText(text.text, text.x, text.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawResultBanner() {
+    if (!state.gameOver) return;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    ctx.fillStyle = state.result === "win" ? "#ffd166" : "#ff8787";
+    ctx.font = "900 54px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(state.result === "win" ? "STAGE CLEAR!" : "TRY AGAIN", WIDTH / 2, 214);
+    ctx.fillStyle = "#f6f7fb";
+    ctx.font = "700 20px system-ui, sans-serif";
+    ctx.fillText(state.message, WIDTH / 2, 252);
+  }
+
+  function draw() {
+    drawBackground();
+    drawBase(ALLY_BASE_X, state.allyBaseHp, "ally");
+    drawBase(ENEMY_BASE_X, state.enemyBaseHp, "enemy");
+    [...state.units, ...state.enemies]
+      .sort((a, b) => a.x - b.x)
+      .forEach(drawFighter);
+    drawFloatingTexts();
+    drawResultBanner();
+  }
+
+  function loop(now) {
+    const deltaMs = now - lastTime;
+    lastTime = now;
+    updateGame(deltaMs);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  ui.spawnGuard.addEventListener("click", () => spawnUnit("guard"));
+  ui.spawnRunner.addEventListener("click", () => spawnUnit("runner"));
+  ui.restart.addEventListener("click", resetGame);
+
+  resetGame();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

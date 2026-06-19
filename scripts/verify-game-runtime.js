@@ -12,6 +12,12 @@ function createElement(id) {
     id,
     disabled: false,
     listeners: {},
+    style: {
+      values: {},
+      setProperty(name, value) {
+        this.values[name] = String(value);
+      }
+    },
     addEventListener(type, callback) {
       this.listeners[type] = callback;
     },
@@ -138,8 +144,17 @@ assert.strictEqual(elements.get("spawnNeko").disabled, false);
 
 elements.get("spawnNeko").click();
 assert.strictEqual(elements.get("money").textContent, "130", "summoning まるねこ should spend 50");
-assert.match(elements.get("spawnNeko").textContent, /あと1\.4秒/, "summon button should show cooldown");
+assert.strictEqual(elements.get("spawnNeko").textContent, "まるねこ 50", "cooldown should not add waiting seconds to the label");
+assert.ok(
+  !/あと|秒/.test(elements.get("spawnNeko").textContent),
+  "summon button should not show waiting seconds"
+);
 assert.strictEqual(elements.get("spawnNeko").disabled, true, "cooling down unit should be disabled");
+assert.notStrictEqual(
+  elements.get("spawnNeko").style.values["--cooldown-fill"],
+  "100%",
+  "cooling down unit should use a visual progress bar"
+);
 
 elements.get("spawnNeko").click();
 assert.strictEqual(elements.get("money").textContent, "130", "cooldown should block repeated spending");

@@ -182,6 +182,35 @@ contains(
 );
 
 contains(
+  html,
+  'class="battle-hud"',
+  "in-game battle HUD"
+);
+
+contains(
+  html,
+  'class="summon-deck"',
+  "summon card deck"
+);
+
+contains(
+  html,
+  'class="summon-card"',
+  "summon card controls"
+);
+
+contains(
+  script,
+  "function updateCooldownBars",
+  "cooldown bars without countdown text"
+);
+
+assert(
+  !script.includes("あと${(") && !script.includes("あと1."),
+  "summon cooldown labels must not display waiting seconds"
+);
+
+contains(
   script,
   "経験値MAX!",
   "experience clear text"

@@ -13,6 +13,7 @@ This design covers:
 - attack feedback
 - stronger role differences for the three ally units
 - summon cooldowns
+- stage experience points
 - stage start and clear presentation
 - a data structure that can later support many stages grouped into named chapters
 
@@ -47,9 +48,10 @@ The first stage should stay easy and readable. The player should understand the 
 2. the player summons a unit from the right side
 3. units fight automatically
 4. hits are visible through effects and damage numbers
-5. the player learns that each ally has a different job
-6. the enemy base breaks quickly enough to feel successful
-7. the clear screen celebrates the win
+5. experience points increase from battle progress
+6. the player learns that each ally has a different job
+7. the experience target is reached quickly enough to feel successful
+8. the clear screen celebrates the win
 
 The game should feel good in a short X video clip. The most important moment is not complexity; it is legibility.
 
@@ -62,7 +64,7 @@ Recommended responsibility boundaries inside the script:
 - `STAGES`: stage/chapter data, balance, intro text, rewards
 - `UNIT_TYPES`: ally stats, cost, cooldown, role text, effect style
 - `ENEMY_TYPES`: enemy stats, reward, sprite info
-- `state`: current run data, timers, cooldowns, effects, result
+- `state`: current run data, timers, cooldowns, experience, effects, result
 - update functions: money, cooldowns, enemy spawning, fighter movement, combat
 - draw functions: background, bases, fighters, effects, overlays, HUD
 - UI functions: button state, messages, labels
@@ -82,7 +84,14 @@ const STAGES = [
     startMoney: 180,
     allyBaseHp: 100,
     enemyBaseHp: 70,
+    targetExperience: 100,
     clearBonus: 120,
+    enemyDefeatExperience: {
+      pyoko: 18,
+      nyoro: 30,
+      trio: 26
+    },
+    baseHitExperienceRate: 1,
     enemySpawnFirstMs: 2600,
     enemySpawnBaseMs: 5200,
     enemySpawnMinMs: 3800,
@@ -105,6 +114,50 @@ Future chapters can follow the same shape:
 - `宇宙ごっこ編`
 
 Only the first stage should be playable in this pass.
+
+## Experience Design
+
+Experience is the first stage's visible progress goal. When the stage experience reaches the target, the clear animation starts.
+
+Add to state:
+
+```js
+experience: 0,
+targetExperience: stage.targetExperience
+```
+
+Experience sources:
+
+- defeating `ぴょこネコ`: +18
+- defeating `にょろゴースト`: +30
+- defeating `わちゃわちゃトリオ`: +26
+- damaging the enemy base: add experience based on damage, using `baseHitExperienceRate`
+- destroying the enemy base: grant any remaining experience needed to reach the target
+
+Clear condition:
+
+```js
+state.experience >= state.targetExperience
+```
+
+The enemy base still exists as a familiar tower-defense objective, but the win transition should be controlled by the experience target. This gives the child a clear "meter filled up" moment and supports future stage goals without adding a stage-select system yet.
+
+UI:
+
+- add a fifth stat tile: `経験値`
+- show it as `現在 / 目標`, for example `42 / 100`
+- keep the stat compact on mobile
+
+Clear presentation:
+
+```text
+経験値MAX!
+大地をゆるがずワンワンステージ クリア
+```
+
+Do not persist experience after reload in this pass. It is per-run stage progress, not account growth.
+
+Experience and money are separate. Money is for summoning during the run; experience is the stage-clear progress meter.
 
 ## Ally Role Design
 
@@ -223,6 +276,7 @@ Clear:
 
 ```text
 STAGE CLEAR!
+経験値MAX!
 大地をゆるがずワンワンステージ クリア
 勝利ボーナス +120
 ```
@@ -241,6 +295,7 @@ Keep the current compact layout. Do not add a landing page.
 Add only small improvements:
 
 - stage/chapter text near the title or canvas overlay
+- compact experience stat in the existing status area
 - cooldown labels inside existing buttons
 - no new menus
 - no nested cards
@@ -265,9 +320,13 @@ Update `scripts/verify-game-contract.js` to protect the new design:
 - first stage keeps quick-win values
 - summon cooldown values exist for all three allies
 - state includes `summonCooldowns`
+- state includes `experience` and `targetExperience`
 - state includes `effects`
+- enemy defeat and base damage increase experience
+- reaching the experience target triggers the clear result
 - combat code adds an effect on hit
 - UI updates button labels during cooldown
+- UI displays experience progress
 - result banner includes stage clear presentation
 - no external communication APIs are introduced
 
@@ -277,6 +336,8 @@ Add or keep a mock-DOM test command for:
 - clicking the same button immediately again is blocked by cooldown
 - cooldown label changes
 - restart resets cooldowns
+- experience starts at 0
+- adding enough experience sets `result` to `win`
 
 ## Safety Design
 
@@ -302,17 +363,33 @@ Risk: cooldowns can make the first stage feel slow.
 
 Design answer: keep starting money at 180, keep enemy base HP at 70, and only use short cooldowns. If play feels slow, increase passive income or attack feedback before adding complexity.
 
+Risk: an experience target can make the player win too early or too late.
+
+Design answer: set first-stage target experience to 100. Enemy rewards and base-hit experience should be tuned so a normal first clear happens quickly after a few defeats or enemy-base hits.
+
 ### Visual Clarity
 
 Risk: effects can cover characters or HP bars.
 
 Design answer: effects are short-lived, drawn near hit points, and do not cover buttons or HUD. HP bars remain after sprites.
 
+Risk: adding an experience stat can crowd the top HUD.
+
+Design answer: use one compact `経験値` tile and keep the stat grid responsive. Do not add a large progress bar until the game has more stages.
+
 ### Future Stages
 
 Risk: adding stage data now could imply a stage select screen too early.
 
 Design answer: `STAGES` supports the future, but only `stageIndex: 0` is playable. No extra UI until at least two real stages exist.
+
+Risk: experience could be mistaken for permanent player progression.
+
+Design answer: name it stage experience in docs and keep it reset-on-restart. Permanent XP can be a later feature after save data is intentionally designed.
+
+Risk: players may confuse money with experience.
+
+Design answer: keep money in the existing `お金` stat and show stage progress as `経験値`. Money changes spending decisions; experience changes the clear state.
 
 ### Naming
 
@@ -349,6 +426,8 @@ The implementation is complete only when all are true:
 - `game.html` contains the first stage data in `STAGES`
 - the stage name appears in the start overlay
 - the clear overlay mentions the stage clear
+- the HUD displays experience progress
+- the first stage clears when experience reaches its target
 - all three ally units have summon cooldowns
 - immediate double summon of the same unit is blocked
 - button labels show cooldown remaining
@@ -357,6 +436,7 @@ The implementation is complete only when all are true:
 - `まるねこ`, `かたいねこ`, and `こうげきねこ` feel meaningfully different
 - existing enemy roster and spawn mix are preserved
 - first stage remains easy and quick
+- experience resets on restart
 - no external communication or storage APIs are added
 - contract tests pass
 - mock summon/cooldown test passes
@@ -365,12 +445,13 @@ The implementation is complete only when all are true:
 
 ## Implementation Order
 
-1. Add failing contract tests for stage data, cooldowns, and effects.
+1. Add failing contract tests for stage data, experience, cooldowns, and effects.
 2. Add `STAGES` and wire `resetGame()` to stage data.
-3. Add summon cooldown state and button labels.
-4. Add effects state and hit/base effect creation.
-5. Add intro and clear overlays using stage data.
-6. Tune ally role stats.
-7. Update README with stage/chapter plan.
-8. Verify locally and visually.
-9. PR, merge, and verify GitHub Pages.
+3. Add experience state, rewards, HUD display, and target-clear condition.
+4. Add summon cooldown state and button labels.
+5. Add effects state and hit/base effect creation.
+6. Add intro and clear overlays using stage data.
+7. Tune ally role stats.
+8. Update README with stage/chapter/experience plan.
+9. Verify locally and visually.
+10. PR, merge, and verify GitHub Pages.

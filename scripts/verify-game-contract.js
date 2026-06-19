@@ -61,7 +61,7 @@ contains(
 
 contains(
   script,
-  'name: "大地をゆるがずワンワンステージ"',
+  'name: "大地をゆるがすワンワンステージ"',
   "first stage name"
 );
 

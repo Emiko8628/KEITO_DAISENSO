@@ -2,7 +2,7 @@
 
 > Fallback location: this plan is stored under `docs/superpowers/specs/` because the local workspace repeatedly removed the same file under `docs/superpowers/plans/` after content writes. Treat this as the active implementation plan.
 
-**Goal:** Implement `大地編 / 大地をゆるがずワンワンステージ` with stage data, experience-to-clear progress, summon cooldowns, hit effects, and start/clear presentation.
+**Goal:** Implement `大地編 / 大地をゆるがすワンワンステージ` with stage data, experience-to-clear progress, summon cooldowns, hit effects, and start/clear presentation.
 
 **Architecture:** Keep the game as static `game.html`, but move first-stage constants into `STAGES`. Add one dependency-free runtime verifier so future changes can be checked automatically without build tooling.
 

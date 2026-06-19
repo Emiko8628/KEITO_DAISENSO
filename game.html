@@ -60,9 +60,9 @@ h1 {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
   gap: 8px;
-  min-width: min(520px, 100%);
+  min-width: min(640px, 100%);
 }
 
 .stat {
@@ -162,13 +162,14 @@ button:disabled {
   <header>
     <div>
       <h1>KEITO大戦争</h1>
-      <p class="subtitle">1ステージだけのブラウザミニタワーディフェンス</p>
+      <p class="subtitle"><span id="stageChapter">大地編</span>｜<span id="stageName">大地をゆるがずワンワンステージ</span></p>
     </div>
     <section class="stats" aria-label="ゲーム状況">
       <div class="stat"><span>お金</span><strong id="money">180</strong></div>
       <div class="stat"><span>味方拠点</span><strong id="allyBase">100</strong></div>
       <div class="stat"><span>敵拠点</span><strong id="enemyBase">70</strong></div>
       <div class="stat"><span>撃破数</span><strong id="defeats">0</strong></div>
+      <div class="stat"><span>経験値</span><strong id="experience">0 / 100</strong></div>
     </section>
   </header>
 
@@ -195,10 +196,13 @@ button:disabled {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
   const ui = {
+    stageChapter: document.getElementById("stageChapter"),
+    stageName: document.getElementById("stageName"),
     money: document.getElementById("money"),
     allyBase: document.getElementById("allyBase"),
     enemyBase: document.getElementById("enemyBase"),
     defeats: document.getElementById("defeats"),
+    experience: document.getElementById("experience"),
     message: document.getElementById("message"),
     spawnNeko: document.getElementById("spawnNeko"),
     spawnTank: document.getElementById("spawnTank"),
@@ -212,6 +216,33 @@ button:disabled {
   const ALLY_BASE_X = WIDTH - 72;
   const ENEMY_BASE_X = 72;
 
+  const STAGES = [
+    {
+      id: "earth-wanwan-01",
+      chapter: "大地編",
+      name: "大地をゆるがずワンワンステージ",
+      startMoney: 180,
+      allyBaseHp: 100,
+      enemyBaseHp: 70,
+      targetExperience: 100,
+      clearBonus: 120,
+      enemyDefeatExperience: {
+        pyoko: 18,
+        nyoro: 30,
+        trio: 26
+      },
+      baseHitExperienceRate: 1,
+      enemySpawnFirstMs: 2600,
+      enemySpawnBaseMs: 5200,
+      enemySpawnMinMs: 3800,
+      enemySpawnTable: [
+        { kind: "pyoko", weight: 70 },
+        { kind: "nyoro", weight: 20 },
+        { kind: "trio", weight: 10 }
+      ]
+    }
+  ];
+
   const UNIT_TYPES = {
     neko: {
       label: "まるねこ",
@@ -219,8 +250,9 @@ button:disabled {
       hp: 90,
       attack: 18,
       range: 34,
-      speed: 0.78,
+      speed: 0.82,
       cooldown: 42,
+      summonCooldownMs: 1400,
       rewardOnWin: 0,
       color: "#66d9ef",
       sprite: "assets/ally-neko.png",
@@ -230,11 +262,12 @@ button:disabled {
     tank: {
       label: "かたいねこ",
       cost: 80,
-      hp: 160,
-      attack: 8,
+      hp: 190,
+      attack: 7,
       range: 30,
-      speed: 0.42,
+      speed: 0.36,
       cooldown: 70,
+      summonCooldownMs: 2600,
       rewardOnWin: 0,
       color: "#74c0fc",
       sprite: "assets/ally-tank-neko.png",
@@ -245,10 +278,11 @@ button:disabled {
       label: "こうげきねこ",
       cost: 110,
       hp: 105,
-      attack: 36,
+      attack: 42,
       range: 32,
-      speed: 0.62,
+      speed: 0.58,
       cooldown: 58,
+      summonCooldownMs: 3200,
       rewardOnWin: 0,
       color: "#ffd43b",
       sprite: "assets/ally-battle-neko.png",
@@ -299,31 +333,42 @@ button:disabled {
     }
   };
 
-  const ENEMY_SPAWN_TABLE = [
-    { kind: "pyoko", weight: 70 },
-    { kind: "nyoro", weight: 20 },
-    { kind: "trio", weight: 10 }
-  ];
-
   let state;
   let lastTime = performance.now();
   const spriteCache = new Map();
 
+  function currentStage() {
+    const index = state && typeof state.stageIndex === "number" ? state.stageIndex : 0;
+    return STAGES[index] || STAGES[0];
+  }
+
   function resetGame() {
+    const stage = STAGES[0];
     state = {
-      money: 180,
-      allyBaseHp: 100,
-      enemyBaseHp: 70,
+      stageIndex: 0,
+      money: stage.startMoney,
+      allyBaseHp: stage.allyBaseHp,
+      enemyBaseHp: stage.enemyBaseHp,
+      targetExperience: stage.targetExperience,
+      experience: 0,
       defeats: 0,
       units: [],
       enemies: [],
       floatingTexts: [],
+      effects: [],
+      summonCooldowns: {
+        neko: 0,
+        tank: 0,
+        battle: 0
+      },
       elapsed: 0,
-      enemySpawnTimer: 2600,
+      enemySpawnTimer: stage.enemySpawnFirstMs,
       incomeTimer: 0,
+      stageIntroTimer: 2200,
       gameOver: false,
       result: "playing",
-      message: "右の陣地からユニットを召喚して、左の敵拠点を先に壊そう。"
+      clearBonusApplied: false,
+      message: `${stage.chapter}、${stage.name}。右の陣地からユニットを召喚しよう。`
     };
     lastTime = performance.now();
     updateUI();
@@ -361,32 +406,54 @@ button:disabled {
     return true;
   }
 
+  function canSummon(kind) {
+    const type = UNIT_TYPES[kind];
+    return !state.gameOver && state.money >= type.cost && state.summonCooldowns[kind] <= 0;
+  }
+
+  function formatSummonLabel(kind) {
+    const type = UNIT_TYPES[kind];
+    const cooldown = state.summonCooldowns[kind];
+    if (cooldown > 0 && !state.gameOver) {
+      return `${type.label} あと${(cooldown / 1000).toFixed(1)}秒`;
+    }
+    return `${type.label} ${type.cost}`;
+  }
+
   function spawnUnit(kind) {
     const type = UNIT_TYPES[kind];
+    if (state.gameOver) return;
+    if (state.summonCooldowns[kind] > 0) {
+      state.message = `${type.label}は準備中。あと少し待とう。`;
+      updateUI();
+      return;
+    }
     if (!spendMoney(type.cost)) {
-      state.message = state.gameOver ? state.message : "お金が足りない。敵を倒すか少し待とう。";
+      state.message = "お金が足りない。敵を倒すか少し待とう。";
       updateUI();
       return;
     }
     state.units.push(createFighter(kind, type, ALLY_BASE_X - 58, "ally"));
+    state.summonCooldowns[kind] = type.summonCooldownMs;
     state.message = `${type.label}を召喚した。`;
     updateUI();
   }
 
   function spawnEnemy() {
     if (state.gameOver) return;
-    const type = chooseEnemyType();
-    state.enemies.push(createFighter("enemy", type, ENEMY_BASE_X + 24, "enemy"));
+    const enemy = chooseEnemyType();
+    state.enemies.push(createFighter(enemy.kind, enemy.type, ENEMY_BASE_X + 24, "enemy"));
   }
 
   function chooseEnemyType() {
-    const totalWeight = ENEMY_SPAWN_TABLE.reduce((sum, entry) => sum + entry.weight, 0);
+    const stage = currentStage();
+    const totalWeight = stage.enemySpawnTable.reduce((sum, entry) => sum + entry.weight, 0);
     let roll = Math.random() * totalWeight;
-    for (const entry of ENEMY_SPAWN_TABLE) {
+    for (const entry of stage.enemySpawnTable) {
       roll -= entry.weight;
-      if (roll <= 0) return ENEMY_TYPES[entry.kind];
+      if (roll <= 0) return { kind: entry.kind, type: ENEMY_TYPES[entry.kind] };
     }
-    return ENEMY_TYPES.pyoko;
+    return { kind: "pyoko", type: ENEMY_TYPES.pyoko };
   }
 
   function loadCharacterSprites() {
@@ -521,11 +588,19 @@ button:disabled {
     if (actor.cooldown > 0) return true;
 
     if (actor.team === "ally") {
+      const previousHp = state.enemyBaseHp;
       state.enemyBaseHp = Math.max(0, state.enemyBaseHp - actor.attack);
+      const damage = previousHp - state.enemyBaseHp;
       addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ffd166");
+      addEffect("baseHit", baseX, GROUND_Y - 78, "#ffd166", "ally");
+      addExperience(Math.ceil(damage * currentStage().baseHitExperienceRate), baseX, GROUND_Y - 104);
+      if (state.enemyBaseHp <= 0) {
+        addExperience(state.targetExperience - state.experience, baseX, GROUND_Y - 128);
+      }
     } else {
       state.allyBaseHp = Math.max(0, state.allyBaseHp - actor.attack);
       addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ff8787");
+      addEffect("baseHit", baseX, GROUND_Y - 78, "#ff8787", "enemy");
     }
     actor.cooldown = actor.cooldownMax;
     return true;
@@ -541,6 +616,8 @@ button:disabled {
         target.hp -= actor.attack;
         target.hitFlash = 8;
         actor.cooldown = actor.cooldownMax;
+        addEffect(actor.team === "ally" ? "slash" : "impact", target.x, target.y - target.height * 0.5, actor.team === "ally" ? "#ffd166" : "#ff8787", actor.team);
+        addEffect("spark", target.x, target.y - target.height * 0.55, actor.team === "ally" ? "#66d9ef" : "#ffb3b3", actor.team);
         addFloatingText(target.x, target.y - target.height, `-${actor.attack}`, actor.team === "ally" ? "#ffd166" : "#ff8787");
       }
       return;
@@ -555,12 +632,38 @@ button:disabled {
     state.floatingTexts.push({ x, y, text, color, life: 52 });
   }
 
+  function addEffect(type, x, y, color, team) {
+    const maxLife = type === "clearBurst" ? 90 : 28;
+    state.effects.push({
+      type,
+      x,
+      y,
+      color,
+      team,
+      life: maxLife,
+      maxLife,
+      angle: Math.random() * Math.PI * 2
+    });
+  }
+
+  function addExperience(amount, x, y) {
+    if (amount <= 0 || state.gameOver) return;
+    const gained = Math.min(amount, state.targetExperience - state.experience);
+    if (gained <= 0) return;
+    state.experience += gained;
+    addFloatingText(x, y, `EXP +${gained}`, "#ffd166");
+  }
+
   function removeDefeated() {
     state.enemies = state.enemies.filter((enemy) => {
       if (enemy.hp > 0) return true;
+      const stage = currentStage();
+      const experience = stage.enemyDefeatExperience[enemy.kind] || 0;
       state.money += enemy.reward;
       state.defeats += 1;
       addFloatingText(enemy.x, enemy.y - 48, `+${enemy.reward}`, "#8ce99a");
+      addExperience(experience, enemy.x, enemy.y - 72);
+      addEffect("impact", enemy.x, enemy.y - enemy.height * 0.55, "#ffd166", "ally");
       return false;
     });
 
@@ -569,15 +672,22 @@ button:disabled {
 
   function updateGame(deltaMs) {
     const dt = Math.min(deltaMs / 16.67, 3);
-    if (state.gameOver) return;
+    if (state.gameOver) {
+      updateEffects(dt);
+      updateFloatingTexts(dt);
+      return;
+    }
 
+    const stage = currentStage();
     state.elapsed += deltaMs;
     state.enemySpawnTimer -= deltaMs;
     state.incomeTimer -= deltaMs;
+    state.stageIntroTimer = Math.max(0, state.stageIntroTimer - deltaMs);
+    updateSummonCooldowns(deltaMs);
 
     if (state.enemySpawnTimer <= 0) {
       spawnEnemy();
-      state.enemySpawnTimer = Math.max(3800, 5200 - state.elapsed * 0.01);
+      state.enemySpawnTimer = Math.max(stage.enemySpawnMinMs, stage.enemySpawnBaseMs - state.elapsed * 0.01);
     }
 
     if (state.incomeTimer <= 0) {
@@ -587,9 +697,24 @@ button:disabled {
 
     [...state.units, ...state.enemies].forEach((fighter) => updateFighter(fighter, dt));
     removeDefeated();
+    updateEffects(dt);
     updateFloatingTexts(dt);
     checkResult();
     updateUI();
+  }
+
+  function updateSummonCooldowns(deltaMs) {
+    Object.keys(state.summonCooldowns).forEach((kind) => {
+      state.summonCooldowns[kind] = Math.max(0, state.summonCooldowns[kind] - deltaMs);
+    });
+  }
+
+  function updateEffects(dt) {
+    state.effects.forEach((effect) => {
+      effect.life -= dt;
+      effect.y -= effect.type === "clearBurst" ? 0.03 * dt : 0;
+    });
+    state.effects = state.effects.filter((effect) => effect.life > 0);
   }
 
   function updateFloatingTexts(dt) {
@@ -601,29 +726,42 @@ button:disabled {
   }
 
   function checkResult() {
-    if (state.enemyBaseHp <= 0) {
+    if (state.gameOver) return;
+    const stage = currentStage();
+    if (state.experience >= state.targetExperience) {
       state.gameOver = true;
       state.result = "win";
-      state.money += 120;
-      state.message = "ステージクリア。勝利ボーナス +120！";
+      if (!state.clearBonusApplied) {
+        state.money += stage.clearBonus;
+        state.clearBonusApplied = true;
+      }
+      addEffect("clearBurst", WIDTH / 2, 206, "#ffd166", "ally");
+      state.message = `経験値MAX! ${stage.name} クリア。勝利ボーナス +${stage.clearBonus}！`;
     } else if (state.allyBaseHp <= 0) {
       state.gameOver = true;
       state.result = "lose";
-      state.message = "味方拠点が壊された。もう一度作戦を立てよう。";
+      state.message = `${stage.chapter}で作戦を立て直そう。`;
     }
   }
 
   function updateUI() {
+    const stage = currentStage();
+    ui.stageChapter.textContent = stage.chapter;
+    ui.stageName.textContent = stage.name;
     ui.money.textContent = Math.floor(state.money);
     ui.allyBase.textContent = Math.ceil(state.allyBaseHp);
     ui.enemyBase.textContent = Math.ceil(state.enemyBaseHp);
     ui.defeats.textContent = state.defeats;
+    ui.experience.textContent = `${Math.floor(state.experience)} / ${state.targetExperience}`;
     ui.message.innerHTML = state.gameOver
       ? `<strong>${state.message}</strong>`
       : state.message;
-    ui.spawnNeko.disabled = state.money < UNIT_TYPES.neko.cost || state.gameOver;
-    ui.spawnTank.disabled = state.money < UNIT_TYPES.tank.cost || state.gameOver;
-    ui.spawnBattle.disabled = state.money < UNIT_TYPES.battle.cost || state.gameOver;
+    ui.spawnNeko.textContent = formatSummonLabel("neko");
+    ui.spawnTank.textContent = formatSummonLabel("tank");
+    ui.spawnBattle.textContent = formatSummonLabel("battle");
+    ui.spawnNeko.disabled = !canSummon("neko");
+    ui.spawnTank.disabled = !canSummon("tank");
+    ui.spawnBattle.disabled = !canSummon("battle");
   }
 
   function drawBackground() {
@@ -659,6 +797,8 @@ button:disabled {
 
   function drawBase(x, hp, team) {
     const isAlly = team === "ally";
+    const stage = currentStage();
+    const maxHp = isAlly ? stage.allyBaseHp : stage.enemyBaseHp;
     ctx.fillStyle = isAlly ? "#2b8a9f" : "#8f3d4f";
     ctx.fillRect(x - 34, GROUND_Y - 82, 68, 106);
     ctx.fillStyle = isAlly ? "#66d9ef" : "#ff6b6b";
@@ -668,7 +808,7 @@ button:disabled {
     ctx.textAlign = "center";
     ctx.fillText(isAlly ? "HOME" : "BOSS", x, GROUND_Y - 86);
 
-    drawHpBar(x - 42, GROUND_Y - 124, 84, 9, hp, 100);
+    drawHpBar(x - 42, GROUND_Y - 124, 84, 9, hp, maxHp);
   }
 
   function drawFighter(fighter) {
@@ -742,8 +882,79 @@ button:disabled {
     ctx.globalAlpha = 1;
   }
 
+  function drawEffects() {
+    for (const effect of state.effects) {
+      const progress = 1 - effect.life / effect.maxLife;
+      const alpha = Math.max(0, effect.life / effect.maxLife);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = effect.color;
+      ctx.fillStyle = effect.color;
+      ctx.lineWidth = 3;
+      ctx.translate(effect.x, effect.y);
+
+      if (effect.type === "slash") {
+        ctx.rotate(-0.55);
+        ctx.beginPath();
+        ctx.moveTo(-16 - progress * 8, 0);
+        ctx.lineTo(18 + progress * 10, -8);
+        ctx.stroke();
+      } else if (effect.type === "impact") {
+        ctx.beginPath();
+        ctx.arc(0, 0, 8 + progress * 18, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (effect.type === "spark") {
+        for (let i = 0; i < 5; i += 1) {
+          const angle = effect.angle + i * (Math.PI * 2 / 5);
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(angle) * 4, Math.sin(angle) * 4);
+          ctx.lineTo(Math.cos(angle) * (13 + progress * 10), Math.sin(angle) * (13 + progress * 10));
+          ctx.stroke();
+        }
+      } else if (effect.type === "baseHit") {
+        ctx.beginPath();
+        ctx.arc(0, 0, 16 + progress * 26, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (effect.type === "clearBurst") {
+        for (let i = 0; i < 12; i += 1) {
+          const angle = effect.angle + i * (Math.PI * 2 / 12);
+          const inner = 56 + progress * 10;
+          const outer = 92 + progress * 34;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+          ctx.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawStageIntro() {
+    if (state.stageIntroTimer <= 0 || state.gameOver) return;
+    const stage = currentStage();
+    const alpha = Math.min(0.88, state.stageIntroTimer / 1200);
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.62})`;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffd166";
+    ctx.font = "900 34px system-ui, sans-serif";
+    ctx.fillText(stage.chapter, WIDTH / 2, 176);
+    ctx.fillStyle = "#f6f7fb";
+    ctx.font = "800 28px system-ui, sans-serif";
+    ctx.fillText(stage.name, WIDTH / 2, 220);
+    ctx.fillStyle = "#b8c0cf";
+    ctx.font = "700 16px system-ui, sans-serif";
+    ctx.fillText("経験値を100までためよう", WIDTH / 2, 252);
+    ctx.restore();
+  }
+
   function drawResultBanner() {
     if (!state.gameOver) return;
+    const stage = currentStage();
     ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     ctx.fillStyle = state.result === "win" ? "#ffd166" : "#ff8787";
@@ -751,6 +962,15 @@ button:disabled {
     ctx.textAlign = "center";
     ctx.fillText(state.result === "win" ? "STAGE CLEAR!" : "TRY AGAIN", WIDTH / 2, 214);
     ctx.fillStyle = "#f6f7fb";
+    if (state.result === "win") {
+      ctx.font = "900 24px system-ui, sans-serif";
+      ctx.fillText("経験値MAX!", WIDTH / 2, 252);
+      ctx.font = "700 18px system-ui, sans-serif";
+      ctx.fillText(`${stage.name} クリア`, WIDTH / 2, 282);
+      ctx.fillStyle = "#ffd166";
+      ctx.fillText(`勝利ボーナス +${stage.clearBonus}`, WIDTH / 2, 310);
+      return;
+    }
     ctx.font = "700 20px system-ui, sans-serif";
     ctx.fillText(state.message, WIDTH / 2, 252);
   }
@@ -762,7 +982,9 @@ button:disabled {
     [...state.units, ...state.enemies]
       .sort((a, b) => a.x - b.x)
       .forEach(drawFighter);
+    drawEffects();
     drawFloatingTexts();
+    drawStageIntro();
     drawResultBanner();
   }
 

@@ -26,12 +26,6 @@ function numberConstant(name) {
   return value;
 }
 
-function stateNumber(name) {
-  const match = script.match(new RegExp(`${name}: ([0-9.]+),`));
-  assert(match, `missing state value ${name}`);
-  return Number(match[1]);
-}
-
 function contains(source, expected, label) {
   assert(
     source.includes(expected),
@@ -53,21 +47,51 @@ assert.strictEqual(
   "player and enemy base label margins should be mirrored"
 );
 
-assert.strictEqual(
-  stateNumber("enemyBaseHp"),
-  70,
+contains(
+  script,
+  "const STAGES = [",
+  "stage data"
+);
+
+contains(
+  script,
+  'chapter: "大地編"',
+  "first chapter name"
+);
+
+contains(
+  script,
+  'name: "大地をゆるがずワンワンステージ"',
+  "first stage name"
+);
+
+contains(
+  script,
+  "targetExperience: 100",
+  "first stage experience target"
+);
+
+contains(
+  script,
+  "enemyBaseHp: 70",
   "first course enemy base HP should be low enough for a quick first win"
 );
 
-assert.strictEqual(
-  stateNumber("money"),
-  180,
+contains(
+  script,
+  "startMoney: 180",
   "first course should start with enough money to summon quickly"
 );
 
 contains(
   script,
-  'state.enemySpawnTimer = Math.max(3800, 5200 - state.elapsed * 0.01);',
+  "enemySpawnMinMs: 3800",
+  "first course minimum enemy pacing"
+);
+
+contains(
+  script,
+  "enemySpawnBaseMs: 5200",
   "first course enemy pacing"
 );
 
@@ -79,7 +103,7 @@ contains(
 
 contains(
   script,
-  'state.enemies.push(createFighter("enemy", type, ENEMY_BASE_X + 24, "enemy"));',
+  'state.enemies.push(createFighter(enemy.kind, enemy.type, ENEMY_BASE_X + 24, "enemy"));',
   "enemy spawn side"
 );
 
@@ -117,8 +141,86 @@ contains(
 
 contains(
   script,
-  "const ENEMY_SPAWN_TABLE = [",
-  "weighted enemy spawn table"
+  'summonCooldownMs: 1400',
+  "まるねこ summon cooldown"
+);
+
+contains(
+  script,
+  'summonCooldownMs: 2600',
+  "かたいねこ summon cooldown"
+);
+
+contains(
+  script,
+  'summonCooldownMs: 3200',
+  "こうげきねこ summon cooldown"
+);
+
+contains(
+  script,
+  "summonCooldowns:",
+  "summon cooldown state"
+);
+
+contains(
+  script,
+  "function addExperience",
+  "experience helper"
+);
+
+contains(
+  script,
+  "state.experience >= state.targetExperience",
+  "experience-based clear condition"
+);
+
+contains(
+  html,
+  'id="experience"',
+  "experience HUD"
+);
+
+contains(
+  script,
+  "経験値MAX!",
+  "experience clear text"
+);
+
+contains(
+  script,
+  "stageIntroTimer:",
+  "stage intro timer"
+);
+
+contains(
+  script,
+  "effects:",
+  "effect state"
+);
+
+contains(
+  script,
+  "function addEffect",
+  "effect creation"
+);
+
+contains(
+  script,
+  "function updateEffects",
+  "effect lifecycle"
+);
+
+contains(
+  script,
+  "function drawEffects",
+  "effect drawing"
+);
+
+contains(
+  script,
+  'addEffect("clearBurst"',
+  "clear burst effect"
 );
 
 contains(

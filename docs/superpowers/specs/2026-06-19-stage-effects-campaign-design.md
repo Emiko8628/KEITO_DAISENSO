@@ -19,7 +19,7 @@ This design covers:
 
 The first playable stage name is:
 
-`大地をゆるがずワンワンステージ`
+`大地をゆるがすワンワンステージ`
 
 The first chapter name is:
 
@@ -80,7 +80,7 @@ const STAGES = [
   {
     id: "earth-wanwan-01",
     chapter: "大地編",
-    name: "大地をゆるがずワンワンステージ",
+    name: "大地をゆるがすワンワンステージ",
     startMoney: 180,
     allyBaseHp: 100,
     enemyBaseHp: 70,
@@ -152,7 +152,7 @@ Clear presentation:
 
 ```text
 経験値MAX!
-大地をゆるがずワンワンステージ クリア
+大地をゆるがすワンワンステージ クリア
 ```
 
 Do not persist experience after reload in this pass. It is per-run stage progress, not account growth.
@@ -255,7 +255,7 @@ Keep effects code-native canvas drawing. No new assets are needed for this pass.
 Add stage metadata to the visible UI:
 
 - header subtitle should show `大地編`
-- message or overlay should show `大地をゆるがずワンワンステージ`
+- message or overlay should show `大地をゆるがすワンワンステージ`
 
 On reset:
 
@@ -269,7 +269,7 @@ Recommended intro:
 
 ```text
 大地編
-大地をゆるがずワンワンステージ
+大地をゆるがすワンワンステージ
 ```
 
 Clear:
@@ -277,7 +277,7 @@ Clear:
 ```text
 STAGE CLEAR!
 経験値MAX!
-大地をゆるがずワンワンステージ クリア
+大地をゆるがすワンワンステージ クリア
 勝利ボーナス +120
 ```
 
@@ -316,7 +316,7 @@ Update `scripts/verify-game-contract.js` to protect the new design:
 
 - `STAGES` exists
 - first stage includes `chapter: "大地編"`
-- first stage includes `name: "大地をゆるがずワンワンステージ"`
+- first stage includes `name: "大地をゆるがすワンワンステージ"`
 - first stage keeps quick-win values
 - summon cooldown values exist for all three allies
 - state includes `summonCooldowns`
@@ -395,7 +395,7 @@ Design answer: keep money in the existing `お金` stat and show stage progress 
 
 Risk: stage name may be accidentally corrected by code or docs.
 
-Design answer: keep the exact user-provided spelling `大地をゆるがずワンワンステージ`.
+Design answer: corrected stage spelling is `大地をゆるがすワンワンステージ`.
 
 Risk: older memory notes used the temporary names `ねこ`, `タンクねこ`, and `バトルねこ`.
 

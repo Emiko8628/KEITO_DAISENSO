@@ -137,7 +137,7 @@ const scriptWithProbe = scriptMatch[1].replace(
 vm.runInNewContext(scriptWithProbe, sandbox, { filename: "game.html" });
 
 assert.strictEqual(elements.get("stageChapter").textContent, "大地編");
-assert.strictEqual(elements.get("stageName").textContent, "大地をゆるがずワンワンステージ");
+assert.strictEqual(elements.get("stageName").textContent, "大地をゆるがすワンワンステージ");
 assert.strictEqual(elements.get("money").textContent, "180");
 assert.strictEqual(elements.get("experience").textContent, "0 / 100");
 assert.strictEqual(elements.get("spawnNeko").disabled, false);
@@ -170,7 +170,7 @@ sandbox.__keitoRuntimeProbe.checkResult();
 assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().result, "win", "experience target should clear the stage");
 assert.match(
   sandbox.__keitoRuntimeProbe.getState().message,
-  /経験値MAX! 大地をゆるがずワンワンステージ クリア/,
+  /経験値MAX! 大地をゆるがすワンワンステージ クリア/,
   "clear message should mention experience and stage name"
 );
 

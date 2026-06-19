@@ -34,63 +34,117 @@ body {
 .app {
   width: min(1040px, 100%);
   margin: 0 auto;
-  padding: 18px;
+  padding: 10px;
 }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-end;
-  margin-bottom: 12px;
+.brand-header {
+  margin-bottom: 8px;
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(26px, 4vw, 42px);
+  font-size: clamp(22px, 3.6vw, 34px);
   line-height: 1.05;
   letter-spacing: 0;
 }
 
-.subtitle {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(92px, 1fr));
-  gap: 8px;
-  min-width: min(640px, 100%);
-}
-
-.stat {
-  border: 1px solid var(--line);
-  background: rgba(25, 31, 43, 0.86);
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-
-.stat span {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.stat strong {
-  display: block;
-  margin-top: 2px;
-  font-size: 18px;
-}
-
 .game-shell {
+  position: relative;
   border: 1px solid var(--line);
   border-radius: 8px;
   overflow: hidden;
   background: #0c1017;
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
 }
+
+.battle-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  pointer-events: none;
+}
+
+.stage-chip,
+.hud-board {
+  border: 2px solid rgba(255, 209, 102, 0.42);
+  background: rgba(0, 0, 0, 0.72);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.42);
+}
+
+.stage-chip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  max-width: min(520px, 56vw);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.pause-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #f6f7fb;
+  border-radius: 50%;
+  color: #10131a;
+  background: var(--gold);
+  font-weight: 900;
+}
+
+.stage-title {
+  display: block;
+  color: var(--gold);
+  font-size: clamp(16px, 2.4vw, 25px);
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.stage-sub {
+  display: block;
+  margin-top: 3px;
+  color: #f6f7fb;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hud-board {
+  min-width: 256px;
+  padding: 7px 10px 8px;
+  border-radius: 8px;
+  text-align: right;
+}
+
+.money-line {
+  color: var(--gold);
+  font-size: clamp(22px, 3.5vw, 36px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.money-line span { font-size: 0.62em; }
+
+.compact-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px 10px;
+  margin-top: 5px;
+  color: #f6f7fb;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.compact-stats span { color: var(--muted); }
 
 canvas {
   display: block;
@@ -99,34 +153,55 @@ canvas {
   background: #101923;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+.summon-deck {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(132px, 1fr));
   gap: 10px;
-  padding: 12px;
+  padding: 12px 14px;
   border-top: 1px solid var(--line);
-  background: var(--panel);
+  background:
+    linear-gradient(180deg, #252d3c 0%, #161c27 100%);
 }
 
 button {
-  min-width: 150px;
-  border: 1px solid #46546a;
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: var(--panel-2);
+  position: relative;
+  min-height: 72px;
+  border: 3px solid #05070b;
+  border-radius: 5px;
+  padding: 10px 10px 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 209, 102, 0.52) 0%, rgba(255, 209, 102, 0.1) 42%, #1f2634 43%, #151a24 100%);
   color: var(--text);
   font: inherit;
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12), 0 4px 0 rgba(0, 0, 0, 0.42);
+  text-shadow: 1px 1px 0 #000;
+  --cooldown-fill: 0%;
 }
 
-button:hover { border-color: var(--blue); }
+button::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 8px;
+  height: 7px;
+  border: 2px solid #05070b;
+  background:
+    linear-gradient(90deg, #39e6ff var(--cooldown-fill), #151a24 0);
+}
+
+button:hover { border-color: var(--gold); }
 button:disabled {
   cursor: not-allowed;
-  color: #7f8897;
-  border-color: #2a3343;
-  background: #161c27;
+  color: #858d9b;
+  filter: grayscale(0.55) brightness(0.74);
+}
+
+.command-card {
+  background:
+    linear-gradient(180deg, rgba(102, 217, 239, 0.42) 0%, rgba(102, 217, 239, 0.1) 42%, #202737 43%, #151a24 100%);
 }
 
 .message {
@@ -147,39 +222,67 @@ button:disabled {
 }
 
 @media (max-width: 760px) {
-  header { display: block; }
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
-    margin-top: 14px;
-    min-width: 0;
+  .battle-hud {
+    position: static;
+    display: grid;
+    padding: 8px;
+    background: #0c1017;
   }
-  button { flex: 1 1 150px; }
+  .stage-chip,
+  .hud-board {
+    max-width: none;
+    width: 100%;
+  }
+  .hud-board {
+    min-width: 0;
+    text-align: left;
+  }
+  .compact-stats {
+    justify-content: flex-start;
+  }
+  .summon-deck {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+  }
+  button {
+    min-height: 60px;
+    padding: 8px 8px 20px;
+    font-size: 14px;
+  }
 }
 </style>
 </head>
 <body>
 <main class="app">
-  <header>
-    <div>
-      <h1>KEITO大戦争</h1>
-      <p class="subtitle"><span id="stageChapter">大地編</span>｜<span id="stageName">大地をゆるがずワンワンステージ</span></p>
-    </div>
-    <section class="stats" aria-label="ゲーム状況">
-      <div class="stat"><span>お金</span><strong id="money">180</strong></div>
-      <div class="stat"><span>味方拠点</span><strong id="allyBase">100</strong></div>
-      <div class="stat"><span>敵拠点</span><strong id="enemyBase">70</strong></div>
-      <div class="stat"><span>撃破数</span><strong id="defeats">0</strong></div>
-      <div class="stat"><span>経験値</span><strong id="experience">0 / 100</strong></div>
-    </section>
+  <header class="brand-header">
+    <h1>KEITO大戦争</h1>
   </header>
 
   <section class="game-shell" aria-label="ゲーム画面">
+    <div class="battle-hud" aria-label="ゲーム状況">
+      <div class="stage-chip">
+        <span class="pause-mark" aria-hidden="true">Ⅱ</span>
+        <span>
+          <span class="stage-title" id="stageName">大地をゆるがずワンワンステージ</span>
+          <span class="stage-sub"><span id="stageChapter">大地編</span>｜EXP <strong id="experience">0 / 100</strong></span>
+        </span>
+      </div>
+      <div class="hud-board">
+        <div class="money-line"><strong id="money">180</strong><span>円</span></div>
+        <div class="compact-stats">
+          <span>HOME <strong id="allyBase">100</strong></span>
+          <span>BOSS <strong id="enemyBase">70</strong></span>
+          <span>撃破 <strong id="defeats">0</strong></span>
+        </div>
+      </div>
+    </div>
     <canvas id="game" width="960" height="480"></canvas>
-    <div class="controls">
-      <button id="spawnNeko">まるねこ 50</button>
-      <button id="spawnTank">かたいねこ 80</button>
-      <button id="spawnBattle">こうげきねこ 110</button>
-      <button id="restart">リスタート</button>
+    <div class="summon-deck">
+      <button id="spawnNeko" class="summon-card">まるねこ 50</button>
+      <button id="spawnTank" class="summon-card">かたいねこ 80</button>
+      <button id="spawnBattle" class="summon-card">こうげきねこ 110</button>
+      <button id="restart" class="command-card">リスタート</button>
     </div>
     <div class="message" id="message">
       右の陣地からユニットを召喚して、左の敵拠点を先に壊そう。
@@ -413,10 +516,6 @@ button:disabled {
 
   function formatSummonLabel(kind) {
     const type = UNIT_TYPES[kind];
-    const cooldown = state.summonCooldowns[kind];
-    if (cooldown > 0 && !state.gameOver) {
-      return `${type.label} あと${(cooldown / 1000).toFixed(1)}秒`;
-    }
     return `${type.label} ${type.cost}`;
   }
 
@@ -762,6 +861,21 @@ button:disabled {
     ui.spawnNeko.disabled = !canSummon("neko");
     ui.spawnTank.disabled = !canSummon("tank");
     ui.spawnBattle.disabled = !canSummon("battle");
+    updateCooldownBars();
+  }
+
+  function updateCooldownBars() {
+    [
+      ["neko", ui.spawnNeko],
+      ["tank", ui.spawnTank],
+      ["battle", ui.spawnBattle]
+    ].forEach(([kind, button]) => {
+      const type = UNIT_TYPES[kind];
+      const remaining = state.gameOver ? 0 : state.summonCooldowns[kind];
+      const progress = 1 - Math.min(1, remaining / type.summonCooldownMs);
+      button.style.setProperty("--cooldown-fill", `${Math.round(progress * 100)}%`);
+    });
+    ui.restart.style.setProperty("--cooldown-fill", "100%");
   }
 
   function drawBackground() {

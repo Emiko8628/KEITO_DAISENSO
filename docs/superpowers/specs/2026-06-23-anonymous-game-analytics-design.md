@@ -34,6 +34,12 @@ Recommended provider order:
 
 Plausible/Umami are better fits than page-view-only analytics because the game needs gameplay events like `first_summon` and `stage_clear`.
 
+Provider setup must include dashboard configuration, not only code:
+
+- Plausible requires matching custom event goals for `game_open`, `first_summon`, and `stage_clear`; otherwise events may be received but not appear as dashboard conversions.
+- Umami can record named events through its tracker, but event data must stay on the approved allowlist below.
+- Cloudflare Web Analytics remains a page-view fallback only unless a separate custom-event-capable setup is confirmed.
+
 ## Privacy Contract
 
 The game must not collect or send:
@@ -56,6 +62,8 @@ The game may send only:
 - chapter: `大地編`
 - stage name: `大地をゆるがすワンワンステージ`
 
+Optional event properties must also stay on an allowlist. The first implementation may include `unitKind` and `unitLabel` only for `first_summon`. It must not send money, HP, unit coordinates, enemy counts, timestamps, user agent, referrer, or free-form strings from the page.
+
 If a provider automatically processes IP address or user agent at the edge, that must be disclosed in the README and footer copy as provider-side anonymous analytics, not game-side personal data collection.
 
 ## Architecture
@@ -68,17 +76,18 @@ Responsibilities:
 - `trackGameEvent(eventName, props)`: single public game-code entrypoint for analytics.
 - `trackPlausibleEvent(eventName, props)`: provider-specific adapter.
 - `trackNoopEvent(eventName, props)`: safe disabled mode.
-- `state.analytics`: page-session state that prevents duplicate `first_summon` and duplicate `game_open`.
+- `analyticsSession`: page-session state outside `resetGame` that prevents duplicate `game_open`, duplicate `first_summon`, and duplicate `stage_clear` when the player presses restart.
 
 The game loop, battle logic, rendering, unit logic, and stage logic must not call provider APIs directly. They may only call `trackGameEvent`.
 
 ## Data Flow
 
-1. On `resetGame`, initialize analytics session flags.
-2. On first page start after `resetGame`, send `game_open` once if analytics is enabled.
+1. On page load, initialize `analyticsSession` once for the browser tab.
+2. On first game start after page load, send `game_open` once if analytics is enabled.
 3. On the first successful `spawnUnit`, send `first_summon` once per page session.
 4. On the first win result in `checkResult`, send `stage_clear` once per page session.
-5. If analytics is disabled or unavailable, do nothing and keep the game playable.
+5. Pressing restart must not reset `analyticsSession`; otherwise one visitor can inflate `game_open` or `first_summon`.
+6. If analytics is disabled, blocked, or unavailable, do nothing and keep the game playable.
 
 ## User-Facing Copy
 
@@ -88,7 +97,7 @@ When analytics is disabled:
 
 When analytics is enabled:
 
-`非公式ファン制作｜匿名の利用状況だけを取得しています。個人情報や入力内容は保存しません。`
+`非公式ファン制作｜匿名の利用状況だけを取得しています。ゲーム内の入力内容や個人情報は保存しません。`
 
 The README must also change from "外部通信なし" to a precise statement:
 
@@ -100,10 +109,14 @@ Do not enable live analytics until all of these are true:
 
 - The provider is chosen.
 - The provider site/domain id is known.
+- Any provider dashboard setup needed for these events is complete.
 - The footer and README copy are updated in the same PR.
 - Tests prove analytics is disabled by default unless configured.
 - Tests prove only approved event names are sent.
+- Tests prove restart does not duplicate page-session events.
+- Tests prove provider failure or script blocking never stops gameplay.
 - The external communication scan is updated to allow exactly the chosen analytics endpoint or script.
+- If external scripts are introduced, the exact script URL and CSP implications are reviewed in the PR.
 
 If the provider is not configured, merge only the design/adapter scaffolding in disabled mode, or wait.
 
@@ -121,6 +134,7 @@ Runtime tests:
 
 - `game_open` is sent once when enabled.
 - `first_summon` is sent once after the first successful summon.
+- restart does not send another `game_open`.
 - repeated summons do not duplicate `first_summon`.
 - `stage_clear` is sent once after enemy base destruction.
 - analytics failure never blocks gameplay.

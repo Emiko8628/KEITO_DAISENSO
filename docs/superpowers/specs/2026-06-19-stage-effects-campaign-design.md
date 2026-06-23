@@ -1,8 +1,10 @@
 # KEITO_DAISENSO Stage Effects And Campaign Design
 
 Date: 2026-06-19
-Status: design review
+Status: superseded for clear-condition rules
 Scope: `game.html` first-stage upgrade, still static HTML/CSS/JavaScript
+
+Superseded note: the experience-based clear rule in this document has been replaced by `docs/superpowers/specs/2026-06-23-victory-objective-readability-design.md`. Experience now gives a notice only; destroying the enemy base clears the stage.
 
 ## Goal
 

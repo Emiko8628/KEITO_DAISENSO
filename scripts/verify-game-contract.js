@@ -33,8 +33,19 @@ function contains(source, expected, label) {
   );
 }
 
+function functionSection(name, nextName) {
+  const start = script.indexOf(`function ${name}`);
+  assert(start >= 0, `missing function ${name}`);
+  if (!nextName) return script.slice(start);
+  const end = script.indexOf(`function ${nextName}`, start + 1);
+  assert(end > start, `missing function ${nextName} after ${name}`);
+  return script.slice(start, end);
+}
+
 const allyBaseX = numberConstant("ALLY_BASE_X");
 const enemyBaseX = numberConstant("ENEMY_BASE_X");
+const attackBaseSection = functionSection("attackBase", "updateFighter");
+const checkResultSection = functionSection("checkResult", "updateUI");
 
 assert(
   allyBaseX > enemyBaseX,
@@ -141,6 +152,18 @@ contains(
 
 contains(
   script,
+  "function drawFighterShadow",
+  "fighter ground shadow renderer"
+);
+
+contains(
+  script,
+  "function drawBaseStructure",
+  "structured base renderer"
+);
+
+contains(
+  script,
   'summonCooldownMs: 1400',
   "まるねこ summon cooldown"
 );
@@ -171,8 +194,36 @@ contains(
 
 contains(
   script,
-  "state.experience >= state.targetExperience",
-  "experience-based clear condition"
+  "experienceNoticeShown: false",
+  "experience notice state"
+);
+
+contains(
+  script,
+  "function maybeShowExperienceNotice",
+  "one-time experience notice helper"
+);
+
+contains(
+  script,
+  "経験値がたまったよ！",
+  "experience notice text"
+);
+
+contains(
+  checkResultSection,
+  "state.enemyBaseHp <= 0",
+  "enemy-base destruction clear condition"
+);
+
+assert(
+  !checkResultSection.includes("state.experience >= state.targetExperience"),
+  "experience target must not be a terminal clear condition"
+);
+
+assert(
+  !attackBaseSection.includes("addExperience(state.targetExperience - state.experience"),
+  "destroying the enemy base must not force-fill remaining experience"
 );
 
 contains(
@@ -212,8 +263,8 @@ assert(
 
 contains(
   script,
-  "経験値MAX!",
-  "experience clear text"
+  "BOSS撃破!",
+  "base-destruction clear text"
 );
 
 contains(

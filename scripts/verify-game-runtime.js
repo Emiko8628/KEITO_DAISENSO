@@ -54,6 +54,7 @@ function createCanvasContext() {
     clearRect() {},
     createLinearGradient() { return gradient; },
     drawImage() {},
+    ellipse() {},
     fill() {},
     fillRect() {},
     fillText() {},
@@ -141,6 +142,11 @@ assert.strictEqual(elements.get("stageName").textContent, "大地をゆるがす
 assert.strictEqual(elements.get("money").textContent, "180");
 assert.strictEqual(elements.get("experience").textContent, "0 / 100");
 assert.strictEqual(elements.get("spawnNeko").disabled, false);
+assert.match(
+  elements.get("message").innerHTML,
+  /左の敵拠点/,
+  "opening message should teach enemy-base destruction as the goal"
+);
 
 elements.get("spawnNeko").click();
 assert.strictEqual(elements.get("money").textContent, "130", "summoning まるねこ should spend 50");
@@ -164,14 +170,49 @@ assert.strictEqual(elements.get("money").textContent, "180", "restart should res
 assert.strictEqual(elements.get("experience").textContent, "0 / 100", "restart should reset experience");
 assert.strictEqual(elements.get("spawnNeko").textContent, "まるねこ 50", "restart should reset summon label");
 assert.strictEqual(elements.get("spawnNeko").disabled, false, "restart should reset cooldown");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().experienceNoticeShown, false, "restart should reset experience notice state");
 
 sandbox.__keitoRuntimeProbe.addExperience(100, 480, 120);
 sandbox.__keitoRuntimeProbe.checkResult();
-assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().result, "win", "experience target should clear the stage");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().result, "playing", "experience target should not clear the stage");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().gameOver, false, "experience target should not stop the battle");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().experienceNoticeShown, true, "experience target should show a one-time notice");
 assert.match(
   sandbox.__keitoRuntimeProbe.getState().message,
-  /経験値MAX! 大地をゆるがすワンワンステージ クリア/,
-  "clear message should mention experience and stage name"
+  /経験値がたまったよ！/,
+  "experience target should update the message without clearing"
+);
+const noticeCount = sandbox.__keitoRuntimeProbe
+  .getState()
+  .floatingTexts
+  .filter((text) => text.text === "経験値がたまったよ！").length;
+sandbox.__keitoRuntimeProbe.addExperience(100, 480, 120);
+assert.strictEqual(
+  sandbox.__keitoRuntimeProbe
+    .getState()
+    .floatingTexts
+    .filter((text) => text.text === "経験値がたまったよ！").length,
+  noticeCount,
+  "experience notice should not repeat after the target is already reached"
+);
+
+sandbox.__keitoRuntimeProbe.getState().enemyBaseHp = 0;
+sandbox.__keitoRuntimeProbe.checkResult();
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().result, "win", "destroying the enemy base should clear the stage");
+assert.match(
+  sandbox.__keitoRuntimeProbe.getState().message,
+  /BOSS撃破! 大地をゆるがすワンワンステージ クリア/,
+  "clear message should mention base destruction and stage name"
+);
+
+elements.get("restart").click();
+sandbox.__keitoRuntimeProbe.getState().allyBaseHp = 0;
+sandbox.__keitoRuntimeProbe.checkResult();
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().result, "lose", "destroying the ally base should lose the stage");
+assert.match(
+  sandbox.__keitoRuntimeProbe.getState().message,
+  /作戦を立て直そう/,
+  "lose message should remain available"
 );
 
 console.log("game runtime verification passed");

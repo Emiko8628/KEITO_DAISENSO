@@ -1,6 +1,6 @@
 # Stage Effects Campaign Implementation Plan
 
-> Fallback location: this plan is stored under `docs/superpowers/specs/` because the local workspace repeatedly removed the same file under `docs/superpowers/plans/` after content writes. Treat this as the active implementation plan.
+> Historical note: this plan was stored under `docs/superpowers/specs/` because the local workspace repeatedly removed the same file under `docs/superpowers/plans/` after content writes. Do not treat it as the active implementation plan for clear-condition rules.
 >
 > Superseded note: the experience-based clear tasks in this plan have been replaced by `docs/superpowers/specs/2026-06-23-victory-objective-readability-design.md`. Experience now gives a notice only; destroying the enemy base clears the stage.
 
@@ -23,7 +23,7 @@
 1. Add failing contract checks in `scripts/verify-game-contract.js` for `STAGES`, `大地編`, exact stage name, target experience, cooldowns, effects, intro timer, and experience clear text.
 2. Add `STAGES`, stage/chapter UI, and `経験値 0 / 100` HUD to `game.html`.
 3. Add `scripts/verify-game-runtime.js` with a mock DOM checking initial experience, summon spending, cooldown blocking, and restart reset.
-4. Add `addExperience`, enemy defeat experience, enemy-base damage experience, and experience-based clear condition.
+4. Historical task: add `addExperience`, enemy defeat experience, enemy-base damage experience, and the original clear rule. This clear-rule part is superseded.
 5. Add per-unit summon cooldowns and ally role tuning.
 6. Add `effects`, `addEffect`, `updateEffects`, and `drawEffects` for slash, impact, spark, base hit, and clear burst.
 7. Add stage intro overlay and improved clear overlay.
@@ -63,5 +63,5 @@ Confirm:
 - Tests pass.
 - Visual QA passes.
 - Worktree is clean on `main`.
-- GitHub Pages serves HTML containing `大地編`, exact stage name, `経験値`, `経験値MAX!`, `summonCooldowns`, and `drawEffects`.
+- GitHub Pages serves HTML containing `大地編`, exact stage name, `経験値`, `summonCooldowns`, and `drawEffects`. The old experience-fill clear copy requirement is superseded.
 - VPS is not used because the deployment target is GitHub Pages.

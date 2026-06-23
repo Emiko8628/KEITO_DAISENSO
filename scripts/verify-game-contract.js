@@ -17,6 +17,7 @@ const requiredAllySprites = [
   { name: "かたいねこ", file: "assets/ally-tank-neko.png", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
   { name: "こうげきねこ", file: "assets/ally-battle-neko.png", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" }
 ];
+const requiredStageBackground = "assets/stage-earth-wanwan-background.png";
 
 function numberConstant(name) {
   const match = script.match(new RegExp(`const ${name} = ([^;]+);`));
@@ -80,6 +81,17 @@ contains(
   script,
   'name: "大地をゆるがすワンワンステージ"',
   "first stage name"
+);
+
+assert(
+  fs.existsSync(requiredStageBackground),
+  `missing first stage background asset: ${requiredStageBackground}`
+);
+
+contains(
+  script,
+  `background: "${requiredStageBackground}"`,
+  "first stage background image"
 );
 
 contains(
@@ -160,6 +172,24 @@ contains(
   script,
   "function drawCharacterSprite",
   "shared character sprite renderer"
+);
+
+contains(
+  script,
+  "function loadStageBackgrounds",
+  "stage background image loader"
+);
+
+contains(
+  script,
+  "function drawStageBackgroundImage",
+  "stage background image renderer"
+);
+
+contains(
+  script,
+  "drawFallbackBackground();",
+  "stage background should keep a fallback if the image is unavailable"
 );
 
 contains(

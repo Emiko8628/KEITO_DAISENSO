@@ -330,6 +330,7 @@ button:disabled {
       enemyBaseHp: 70,
       targetExperience: 100,
       clearBonus: 120,
+      background: "assets/stage-earth-wanwan-background.png",
       enemyDefeatExperience: {
         pyoko: 18,
         nyoro: 30,
@@ -440,6 +441,7 @@ button:disabled {
   let state;
   let lastTime = performance.now();
   const spriteCache = new Map();
+  const backgroundCache = new Map();
 
   function currentStage() {
     const index = state && typeof state.stageIndex === "number" ? state.stageIndex : 0;
@@ -569,6 +571,21 @@ button:disabled {
         spriteCache.set(type.sprite, null);
       };
       image.src = type.sprite;
+    });
+  }
+
+  function loadStageBackgrounds() {
+    if (typeof Image === "undefined") return;
+    STAGES.forEach((stage) => {
+      if (!stage.background) return;
+      const image = new Image();
+      image.onload = () => {
+        backgroundCache.set(stage.background, image);
+      };
+      image.onerror = () => {
+        backgroundCache.set(stage.background, null);
+      };
+      image.src = stage.background;
     });
   }
 
@@ -887,6 +904,27 @@ button:disabled {
   }
 
   function drawBackground() {
+    const stage = currentStage();
+    const background = stage.background ? backgroundCache.get(stage.background) : null;
+    if (background) {
+      drawStageBackgroundImage(background);
+      return;
+    }
+    drawFallbackBackground();
+  }
+
+  function drawStageBackgroundImage(image) {
+    const imageWidth = image.naturalWidth || image.width;
+    const imageHeight = image.naturalHeight || image.height;
+    const scale = Math.max(WIDTH / imageWidth, HEIGHT / imageHeight);
+    const drawWidth = imageWidth * scale;
+    const drawHeight = imageHeight * scale;
+    const dx = (WIDTH - drawWidth) / 2;
+    const dy = HEIGHT - drawHeight;
+    ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
+  }
+
+  function drawFallbackBackground() {
     const sky = ctx.createLinearGradient(0, 0, 0, HEIGHT);
     sky.addColorStop(0, "#162132");
     sky.addColorStop(0.66, "#111923");
@@ -1182,6 +1220,7 @@ button:disabled {
   ui.restart.addEventListener("click", resetGame);
 
   loadCharacterSprites();
+  loadStageBackgrounds();
   resetGame();
   requestAnimationFrame(loop);
 })();

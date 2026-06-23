@@ -8,6 +8,8 @@
 
 **Tech Stack:** Static HTML, inline JavaScript, Node-based verification scripts, GitHub Pages.
 
+**Implementation status:** Task 1 through Task 3 are implemented in disabled mode. Live provider enablement in Task 4 is still intentionally blocked until provider, domain, script URL, and dashboard goals are confirmed.
+
 ---
 
 ## File Structure

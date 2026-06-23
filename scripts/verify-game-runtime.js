@@ -93,6 +93,64 @@ for (const id of ids) {
 elements.get("game").width = 960;
 elements.get("game").height = 480;
 elements.get("game").getContext = () => createCanvasContext();
+const trackedEvents = [];
+
+function createRuntimeElements() {
+  const runtimeElements = new Map();
+  for (const id of ids) {
+    runtimeElements.set(id, createElement(id));
+  }
+  runtimeElements.get("game").width = 960;
+  runtimeElements.get("game").height = 480;
+  runtimeElements.get("game").getContext = () => createCanvasContext();
+  return runtimeElements;
+}
+
+function createRuntime(scriptSource, options = {}) {
+  const runtimeElements = createRuntimeElements();
+  const trackedEvents = [];
+  const runtimeSandbox = {
+    console,
+    crypto: {
+      randomUUID: () => "runtime-id"
+    },
+    document: {
+      getElementById(id) {
+        const element = runtimeElements.get(id);
+        assert(element, `unexpected document id: ${id}`);
+        return element;
+      },
+      createElement(tagName) {
+        if (tagName !== "canvas") return createElement(tagName);
+        return {
+          width: 0,
+          height: 0,
+          getContext: () => createCanvasContext()
+        };
+      }
+    },
+    Math,
+    performance: {
+      now: () => 1000
+    },
+    requestAnimationFrame() {},
+    trackedEvents
+  };
+
+  runtimeSandbox.window = options.window || {
+    plausible(eventName, payload) {
+      trackedEvents.push({ eventName, payload });
+    }
+  };
+
+  vm.runInNewContext(scriptSource, runtimeSandbox, { filename: "game.html" });
+
+  return {
+    elements: runtimeElements,
+    sandbox: runtimeSandbox,
+    trackedEvents
+  };
+}
 
 const sandbox = {
   console,
@@ -118,7 +176,8 @@ const sandbox = {
   performance: {
     now: () => 1000
   },
-  requestAnimationFrame() {}
+  requestAnimationFrame() {},
+  trackedEvents
 };
 
 const scriptWithProbe = scriptMatch[1].replace(
@@ -130,7 +189,9 @@ const scriptWithProbe = scriptMatch[1].replace(
     "  globalThis.__keitoRuntimeProbe = {",
     "    addExperience,",
     "    checkResult,",
-    "    getState: () => state",
+    "    getState: () => state,",
+    "    getTrackedEvents: () => trackedEvents,",
+    "    trackGameEvent",
     "  };",
     "  requestAnimationFrame(loop);"
   ].join("\n")
@@ -172,6 +233,11 @@ assert.strictEqual(elements.get("experience").textContent, "0 / 100", "restart s
 assert.strictEqual(elements.get("spawnNeko").textContent, "まるねこ 50", "restart should reset summon label");
 assert.strictEqual(elements.get("spawnNeko").disabled, false, "restart should reset cooldown");
 assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().experienceNoticeShown, false, "restart should reset experience notice state");
+assert.deepStrictEqual(
+  sandbox.__keitoRuntimeProbe.getTrackedEvents(),
+  [],
+  "analytics should not send events when disabled by default"
+);
 
 sandbox.__keitoRuntimeProbe.addExperience(100, 480, 120);
 sandbox.__keitoRuntimeProbe.checkResult();
@@ -215,5 +281,116 @@ assert.match(
   /作戦を立て直そう/,
   "lose message should remain available"
 );
+
+const enabledScript = scriptWithProbe.replace(
+  "enabled: false,\n    provider: \"noop\",",
+  "enabled: true,\n    provider: \"plausible\","
+);
+const {
+  elements: enabledElements,
+  sandbox: enabledSandbox
+} = createRuntime(enabledScript);
+
+assert.deepStrictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .map((event) => event.eventName),
+  ["game_open"],
+  "enabled analytics should send one game_open after page start"
+);
+
+enabledElements.get("restart").click();
+assert.deepStrictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .map((event) => event.eventName),
+  ["game_open"],
+  "restart should not duplicate game_open"
+);
+
+enabledElements.get("spawnNeko").click();
+enabledElements.get("restart").click();
+enabledElements.get("spawnNeko").click();
+assert.strictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .filter((event) => event.eventName === "first_summon").length,
+  1,
+  "first_summon should be sent once per page session"
+);
+assert.deepStrictEqual(
+  JSON.parse(JSON.stringify(
+    enabledSandbox.__keitoRuntimeProbe
+      .getTrackedEvents()
+      .find((event) => event.eventName === "first_summon").payload.props
+  )),
+  {
+    stageId: "earth-wanwan-01",
+    chapter: "大地編",
+    stageName: "大地をゆるがすワンワンステージ",
+    unitKind: "neko",
+    unitLabel: "まるねこ"
+  },
+  "first_summon should send only allowlisted stage and unit props"
+);
+
+enabledSandbox.__keitoRuntimeProbe.getState().enemyBaseHp = 0;
+enabledSandbox.__keitoRuntimeProbe.checkResult();
+enabledSandbox.__keitoRuntimeProbe.checkResult();
+assert.strictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .filter((event) => event.eventName === "stage_clear").length,
+  1,
+  "stage_clear should be sent once per page session"
+);
+
+const {
+  sandbox: propsSandbox
+} = createRuntime(enabledScript);
+const beforeUnknownEventCount = propsSandbox.__keitoRuntimeProbe.getTrackedEvents().length;
+propsSandbox.__keitoRuntimeProbe.trackGameEvent("unknown_event", {
+  stageId: "earth-wanwan-01"
+});
+assert.strictEqual(
+  propsSandbox.__keitoRuntimeProbe.getTrackedEvents().length,
+  beforeUnknownEventCount,
+  "unknown analytics events should be ignored"
+);
+
+propsSandbox.__keitoRuntimeProbe.trackGameEvent("first_summon", {
+  stageId: "earth-wanwan-01",
+  chapter: "大地編",
+  stageName: "大地をゆるがすワンワンステージ",
+  unitKind: "neko",
+  unitLabel: "まるねこ",
+  money: "999",
+  hp: "10",
+  x: "100",
+  freeText: "should not leave the page"
+});
+assert.deepStrictEqual(
+  JSON.parse(JSON.stringify(propsSandbox.__keitoRuntimeProbe.getTrackedEvents().at(-1).payload.props)),
+  {
+    stageId: "earth-wanwan-01",
+    chapter: "大地編",
+    stageName: "大地をゆるがすワンワンステージ",
+    unitKind: "neko",
+    unitLabel: "まるねこ"
+  },
+  "analytics should drop non-allowlisted props"
+);
+
+const { elements: blockedElements } = createRuntime(enabledScript, {
+  window: {
+    plausible() {
+      throw new Error("analytics blocked");
+    }
+  }
+});
+
+blockedElements.get("spawnNeko").click();
+assert.strictEqual(blockedElements.get("money").textContent, "130");
+assert.match(blockedElements.get("message").innerHTML, /まるねこを召喚した/);
 
 console.log("game runtime verification passed");

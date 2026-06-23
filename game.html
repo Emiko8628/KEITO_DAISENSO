@@ -319,6 +319,30 @@ button:disabled {
   const FIGHTER_GROUND_Y = GROUND_Y + 24;
   const ALLY_BASE_X = WIDTH - 72;
   const ENEMY_BASE_X = 72;
+  const ANALYTICS_CONFIG = {
+    enabled: false,
+    provider: "noop",
+    siteDomain: "",
+    scriptSrc: ""
+  };
+
+  const ANALYTICS_EVENTS = Object.freeze({
+    gameOpen: "game_open",
+    firstSummon: "first_summon",
+    stageClear: "stage_clear"
+  });
+
+  const ANALYTICS_ALLOWED_PROPS = Object.freeze({
+    game_open: ["stageId", "chapter", "stageName"],
+    first_summon: ["stageId", "chapter", "stageName", "unitKind", "unitLabel"],
+    stage_clear: ["stageId", "chapter", "stageName"]
+  });
+
+  const analyticsSession = {
+    gameOpenSent: false,
+    firstSummonSent: false,
+    stageClearSent: false
+  };
 
   const STAGES = [
     {
@@ -448,6 +472,70 @@ button:disabled {
     return STAGES[index] || STAGES[0];
   }
 
+  function analyticsStageProps() {
+    const stage = currentStage();
+    return {
+      stageId: stage.id,
+      chapter: stage.chapter,
+      stageName: stage.name
+    };
+  }
+
+  function trackGameEvent(eventName, props = {}) {
+    if (!Object.values(ANALYTICS_EVENTS).includes(eventName)) return;
+    const safeProps = sanitizeAnalyticsProps(eventName, props);
+    if (!ANALYTICS_CONFIG.enabled) {
+      trackNoopEvent(eventName, safeProps);
+      return;
+    }
+    if (ANALYTICS_CONFIG.provider === "plausible") {
+      trackPlausibleEvent(eventName, safeProps);
+      return;
+    }
+    trackNoopEvent(eventName, safeProps);
+  }
+
+  function trackNoopEvent() {}
+
+  function sanitizeAnalyticsProps(eventName, props) {
+    const allowedKeys = ANALYTICS_ALLOWED_PROPS[eventName] || [];
+    return allowedKeys.reduce((safeProps, key) => {
+      if (typeof props[key] === "string") safeProps[key] = props[key];
+      return safeProps;
+    }, {});
+  }
+
+  function trackPlausibleEvent(eventName, props) {
+    try {
+      if (typeof window === "undefined" || typeof window.plausible !== "function") return;
+      window.plausible(eventName, { props });
+    } catch (error) {
+      trackNoopEvent(eventName, props);
+    }
+  }
+
+  function trackGameOpen() {
+    if (analyticsSession.gameOpenSent) return;
+    analyticsSession.gameOpenSent = true;
+    trackGameEvent(ANALYTICS_EVENTS.gameOpen, analyticsStageProps());
+  }
+
+  function trackFirstSummon(kind, label) {
+    if (analyticsSession.firstSummonSent) return;
+    analyticsSession.firstSummonSent = true;
+    trackGameEvent(ANALYTICS_EVENTS.firstSummon, {
+      ...analyticsStageProps(),
+      unitKind: kind,
+      unitLabel: label
+    });
+  }
+
+  function trackStageClear() {
+    if (analyticsSession.stageClearSent) return;
+    analyticsSession.stageClearSent = true;
+    trackGameEvent(ANALYTICS_EVENTS.stageClear, analyticsStageProps());
+  }
+
   function resetGame() {
     const stage = STAGES[0];
     state = {
@@ -479,6 +567,7 @@ button:disabled {
     };
     lastTime = performance.now();
     updateUI();
+    trackGameOpen();
   }
 
   function createFighter(kind, type, x, team) {
@@ -537,6 +626,7 @@ button:disabled {
       return;
     }
     state.units.push(createFighter(kind, type, ALLY_BASE_X - 58, "ally"));
+    trackFirstSummon(kind, type.label);
     state.summonCooldowns[kind] = type.summonCooldownMs;
     state.message = `${type.label}を召喚した。`;
     updateUI();
@@ -860,6 +950,7 @@ button:disabled {
         state.clearBonusApplied = true;
       }
       addEffect("clearBurst", WIDTH / 2, 206, "#ffd166", "ally");
+      trackStageClear();
       state.message = `BOSS撃破! ${stage.name} クリア。勝利ボーナス +${stage.clearBonus}！`;
     } else if (state.allyBaseHp <= 0) {
       state.gameOver = true;

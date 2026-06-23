@@ -260,6 +260,76 @@ contains(
 
 contains(
   script,
+  "const ANALYTICS_CONFIG = {",
+  "analytics config boundary"
+);
+
+contains(
+  script,
+  "enabled: false",
+  "analytics must be disabled by default"
+);
+
+contains(
+  script,
+  'provider: "noop"',
+  "analytics must use noop provider by default"
+);
+
+contains(
+  script,
+  "const ANALYTICS_EVENTS = Object.freeze",
+  "analytics event names should be centralized"
+);
+
+contains(
+  script,
+  "game_open",
+  "analytics should support game_open"
+);
+
+contains(
+  script,
+  "first_summon",
+  "analytics should support first_summon"
+);
+
+contains(
+  script,
+  "stage_clear",
+  "analytics should support stage_clear"
+);
+
+contains(
+  script,
+  "function trackGameEvent",
+  "single analytics tracking entrypoint"
+);
+
+contains(
+  script,
+  "function trackNoopEvent",
+  "safe analytics disabled adapter"
+);
+
+contains(
+  script,
+  "const analyticsSession = {",
+  "analytics page-session state should live outside resetGame"
+);
+
+assert(
+  !script.includes("localStorage") && !script.includes("sessionStorage"),
+  "analytics must not add browser storage identifiers"
+);
+
+assert(
+  !script.includes("analytics: {"),
+  "analytics page-session flags must not be reset with game state"
+);
+
+contains(
+  script,
   "experienceNoticeShown: false",
   "experience notice state"
 );

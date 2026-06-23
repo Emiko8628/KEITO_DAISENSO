@@ -66,6 +66,12 @@ contains(
 
 contains(
   script,
+  "const FIGHTER_GROUND_Y = GROUND_Y + 24",
+  "fighter ground contact line should match the visible floor edge"
+);
+
+contains(
+  script,
   'chapter: "大地編"',
   "first chapter name"
 );
@@ -120,6 +126,12 @@ contains(
 
 contains(
   script,
+  "y: FIGHTER_GROUND_Y",
+  "fighters should stand on the same visual ground line as bases"
+);
+
+contains(
+  script,
   'actor.x += actor.team === "ally" ? -actor.speed * dt : actor.speed * dt;',
   "movement direction"
 );
@@ -158,8 +170,8 @@ contains(
 
 contains(
   script,
-  "shadowWidth * 1.35",
-  "fighter shadow should have a wider soft outer layer"
+  "shadowWidth * 1.2",
+  "fighter shadow should have a soft contact layer"
 );
 
 contains(
@@ -172,6 +184,12 @@ contains(
   script,
   "rgba(255, 255, 255, 0.12)",
   "fighter shadow should include a subtle rim so it reads on dark terrain"
+);
+
+contains(
+  script,
+  "ctx.ellipse(0, 0, shadowWidth * 1.2, 5",
+  "fighter shadow should be flattened directly under the feet"
 );
 
 contains(

@@ -316,6 +316,7 @@ button:disabled {
   const WIDTH = canvas.width;
   const HEIGHT = canvas.height;
   const GROUND_Y = 342;
+  const FIGHTER_GROUND_Y = GROUND_Y + 24;
   const ALLY_BASE_X = WIDTH - 72;
   const ENEMY_BASE_X = 72;
 
@@ -485,7 +486,7 @@ button:disabled {
       label: type.label,
       team,
       x,
-      y: GROUND_Y,
+      y: FIGHTER_GROUND_Y,
       width: type.spriteWidth || (team === "ally" ? 30 : 32),
       height: type.spriteHeight || (team === "ally" ? 44 : 38),
       hp: type.hp,
@@ -984,21 +985,21 @@ button:disabled {
 
   function drawFighterShadow(fighter) {
     const drawWidth = fighter.spriteWidth || fighter.width;
-    const shadowWidth = Math.max(24, drawWidth * 0.52);
+    const shadowWidth = Math.max(22, drawWidth * 0.5);
     ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
     ctx.beginPath();
-    ctx.ellipse(0, 4, shadowWidth * 1.35, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, shadowWidth * 1.2, 5, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
     ctx.beginPath();
-    ctx.ellipse(0, 4, shadowWidth, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, shadowWidth * 0.88, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.ellipse(0, 4, shadowWidth * 1.02, 7.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, shadowWidth * 0.92, 4, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
 

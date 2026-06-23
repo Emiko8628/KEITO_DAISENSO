@@ -13,7 +13,7 @@
 ## File Structure
 
 - Modify: `game.html`
-  - Add `ANALYTICS_CONFIG`, event constants, analytics session state, and `trackGameEvent`.
+  - Add `ANALYTICS_CONFIG`, event constants, page-session analytics state, and `trackGameEvent`.
   - Add calls from page start, successful first summon, and stage clear.
   - Keep provider code isolated from battle/rendering logic.
 - Modify: `scripts/verify-game-contract.js`
@@ -81,6 +81,12 @@ contains(
   "safe analytics disabled adapter"
 );
 
+contains(
+  script,
+  "const analyticsSession = {",
+  "analytics page-session state should live outside resetGame"
+);
+
 assert(
   !script.includes("localStorage") && !script.includes("sessionStorage"),
   "analytics must not add browser storage identifiers"
@@ -128,19 +134,25 @@ const ANALYTICS_EVENTS = Object.freeze({
   firstSummon: "first_summon",
   stageClear: "stage_clear"
 });
-```
 
-- [ ] **Step 2: Add analytics state to resetGame**
+const ANALYTICS_ALLOWED_PROPS = Object.freeze({
+  game_open: ["stageId", "chapter", "stageName"],
+  first_summon: ["stageId", "chapter", "stageName", "unitKind", "unitLabel"],
+  stage_clear: ["stageId", "chapter", "stageName"]
+});
 
-Inside the object assigned to `state` in `resetGame`, add this property next to the other top-level state fields:
-
-```js
-analytics: {
+const analyticsSession = {
   gameOpenSent: false,
   firstSummonSent: false,
   stageClearSent: false
-},
+};
 ```
+
+- [ ] **Step 2: Keep analytics state outside resetGame**
+
+Do not add analytics flags inside the object assigned to `state` in `resetGame`. Restarting the stage resets `state`, so putting analytics flags there would let one player inflate `game_open`, `first_summon`, and `stage_clear`.
+
+The `analyticsSession` object created in Step 1 is the only page-session analytics state.
 
 - [ ] **Step 3: Add tracking functions**
 
@@ -157,22 +169,36 @@ function analyticsStageProps() {
 }
 
 function trackGameEvent(eventName, props = {}) {
+  if (!Object.values(ANALYTICS_EVENTS).includes(eventName)) return;
+  const safeProps = sanitizeAnalyticsProps(eventName, props);
   if (!ANALYTICS_CONFIG.enabled) {
-    trackNoopEvent(eventName, props);
+    trackNoopEvent(eventName, safeProps);
     return;
   }
   if (ANALYTICS_CONFIG.provider === "plausible") {
-    trackPlausibleEvent(eventName, props);
+    trackPlausibleEvent(eventName, safeProps);
     return;
   }
-  trackNoopEvent(eventName, props);
+  trackNoopEvent(eventName, safeProps);
 }
 
 function trackNoopEvent() {}
 
+function sanitizeAnalyticsProps(eventName, props) {
+  const allowedKeys = ANALYTICS_ALLOWED_PROPS[eventName] || [];
+  return allowedKeys.reduce((safeProps, key) => {
+    if (typeof props[key] === "string") safeProps[key] = props[key];
+    return safeProps;
+  }, {});
+}
+
 function trackPlausibleEvent(eventName, props) {
-  if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-  window.plausible(eventName, { props });
+  try {
+    if (typeof window === "undefined" || typeof window.plausible !== "function") return;
+    window.plausible(eventName, { props });
+  } catch (error) {
+    trackNoopEvent(eventName, props);
+  }
 }
 ```
 
@@ -188,8 +214,8 @@ Add helper:
 
 ```js
 function trackGameOpen() {
-  if (state.analytics.gameOpenSent) return;
-  state.analytics.gameOpenSent = true;
+  if (analyticsSession.gameOpenSent) return;
+  analyticsSession.gameOpenSent = true;
   trackGameEvent(ANALYTICS_EVENTS.gameOpen, analyticsStageProps());
 }
 ```
@@ -216,8 +242,8 @@ Add:
 
 ```js
 function trackFirstSummon(kind, label) {
-  if (state.analytics.firstSummonSent) return;
-  state.analytics.firstSummonSent = true;
+  if (analyticsSession.firstSummonSent) return;
+  analyticsSession.firstSummonSent = true;
   trackGameEvent(ANALYTICS_EVENTS.firstSummon, {
     ...analyticsStageProps(),
     unitKind: kind,
@@ -240,8 +266,8 @@ Add:
 
 ```js
 function trackStageClear() {
-  if (state.analytics.stageClearSent) return;
-  state.analytics.stageClearSent = true;
+  if (analyticsSession.stageClearSent) return;
+  analyticsSession.stageClearSent = true;
   trackGameEvent(ANALYTICS_EVENTS.stageClear, analyticsStageProps());
 }
 ```
@@ -290,7 +316,81 @@ assert.deepStrictEqual(
 );
 ```
 
-- [ ] **Step 7: Run runtime test**
+- [ ] **Step 7: Add runtime assertions for enabled mode**
+
+Build a second `scriptWithAnalyticsEnabled` in `scripts/verify-game-runtime.js` by replacing the disabled config before running it:
+
+```js
+const enabledScript = scriptWithProbe.replace(
+  "enabled: false,\n  provider: \"noop\",",
+  "enabled: true,\n  provider: \"plausible\","
+);
+```
+
+Run the enabled script in a fresh sandbox with a fake `window.plausible`. Assert:
+
+```js
+assert.deepStrictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .map((event) => event.eventName),
+  ["game_open"],
+  "enabled analytics should send one game_open after page start"
+);
+
+enabledElements.get("restart").click();
+assert.deepStrictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .map((event) => event.eventName),
+  ["game_open"],
+  "restart should not duplicate game_open"
+);
+
+enabledElements.get("spawnNeko").click();
+enabledElements.get("restart").click();
+enabledElements.get("spawnNeko").click();
+assert.deepStrictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .filter((event) => event.eventName === "first_summon").length,
+  1,
+  "first_summon should be sent once per page session"
+);
+
+enabledSandbox.__keitoRuntimeProbe.getState().enemyBaseHp = 0;
+enabledSandbox.__keitoRuntimeProbe.checkResult();
+enabledSandbox.__keitoRuntimeProbe.checkResult();
+assert.deepStrictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .filter((event) => event.eventName === "stage_clear").length,
+  1,
+  "stage_clear should be sent once per page session"
+);
+```
+
+- [ ] **Step 8: Add provider failure assertion**
+
+Run another enabled sandbox where `window.plausible` throws:
+
+```js
+window: {
+  plausible() {
+    throw new Error("analytics blocked");
+  }
+}
+```
+
+Assert that `spawnNeko` still spends money and updates the message:
+
+```js
+blockedElements.get("spawnNeko").click();
+assert.strictEqual(blockedElements.get("money").textContent, "130");
+assert.match(blockedElements.get("message").innerHTML, /まるねこを召喚した/);
+```
+
+- [ ] **Step 9: Run runtime test**
 
 Run:
 
@@ -298,7 +398,7 @@ Run:
 node scripts/verify-game-runtime.js
 ```
 
-Expected: PASS with no tracked events in disabled mode.
+Expected: PASS with disabled mode, enabled mode, restart dedupe, and provider failure covered.
 
 ## Task 4: Provider Enablement PR
 
@@ -315,14 +415,17 @@ Required values:
 provider = plausible
 siteDomain = emiko8628.github.io/KEITO_DAISENSO or the chosen custom domain
 scriptSrc = the provider-approved script URL
+providerDashboardGoals = game_open, first_summon, stage_clear
 ```
+
+For Plausible, create matching custom event goals for `game_open`, `first_summon`, and `stage_clear` before expecting the dashboard to show conversion counts.
 
 - [ ] **Step 2: Update public copy in the same PR**
 
 Change footer text in `game.html` to:
 
 ```html
-<p class="note">非公式ファン制作｜匿名の利用状況だけを取得しています。個人情報や入力内容は保存しません。</p>
+<p class="note">非公式ファン制作｜匿名の利用状況だけを取得しています。ゲーム内の入力内容や個人情報は保存しません。</p>
 ```
 
 Change README safety wording to:
@@ -330,7 +433,8 @@ Change README safety wording to:
 ```md
 - 静的HTMLで動作します
 - 匿名の利用状況計測を有効にする場合のみ、設定した解析サービスへ game_open / first_summon / stage_clear を送信します
-- 名前、メール、入力内容、保存データは扱いません
+- ゲーム内の名前、メール、入力内容、保存データは扱いません
+- 解析サービス側の処理は、選んだサービスのプライバシーポリシーに従います
 ```
 
 - [ ] **Step 3: Add script/config only after provider is ready**
@@ -345,6 +449,8 @@ const ANALYTICS_CONFIG = {
   scriptSrc: "CONFIRMED_SCRIPT_URL"
 };
 ```
+
+If the provider requires a browser script, add exactly one provider-approved `<script>` tag or a tiny loader guarded by `ANALYTICS_CONFIG`. Do not add a tag manager. Do not add arbitrary remote scripts. If a Content Security Policy is introduced later, update it to allow only the selected analytics script and endpoint.
 
 - [ ] **Step 4: Update external communication scan**
 

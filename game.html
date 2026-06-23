@@ -285,7 +285,7 @@ button:disabled {
       <button id="restart" class="command-card">リスタート</button>
     </div>
     <div class="message" id="message">
-      右の陣地からユニットを召喚して、左の敵拠点を先に壊そう。
+      右の陣地からユニットを召喚して、左の敵拠点をこわそう。
     </div>
   </section>
 
@@ -459,6 +459,7 @@ button:disabled {
       enemies: [],
       floatingTexts: [],
       effects: [],
+      experienceNoticeShown: false,
       summonCooldowns: {
         neko: 0,
         tank: 0,
@@ -471,7 +472,7 @@ button:disabled {
       gameOver: false,
       result: "playing",
       clearBonusApplied: false,
-      message: `${stage.chapter}、${stage.name}。右の陣地からユニットを召喚しよう。`
+      message: `${stage.chapter}、${stage.name}。右の陣地からユニットを召喚して、左の敵拠点をこわそう。`
     };
     lastTime = performance.now();
     updateUI();
@@ -693,9 +694,6 @@ button:disabled {
       addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ffd166");
       addEffect("baseHit", baseX, GROUND_Y - 78, "#ffd166", "ally");
       addExperience(Math.ceil(damage * currentStage().baseHitExperienceRate), baseX, GROUND_Y - 104);
-      if (state.enemyBaseHp <= 0) {
-        addExperience(state.targetExperience - state.experience, baseX, GROUND_Y - 128);
-      }
     } else {
       state.allyBaseHp = Math.max(0, state.allyBaseHp - actor.attack);
       addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ff8787");
@@ -751,6 +749,15 @@ button:disabled {
     if (gained <= 0) return;
     state.experience += gained;
     addFloatingText(x, y, `EXP +${gained}`, "#ffd166");
+    maybeShowExperienceNotice(x, y - 24);
+  }
+
+  function maybeShowExperienceNotice(x, y) {
+    if (state.experienceNoticeShown || state.experience < state.targetExperience || state.gameOver) return;
+    state.experienceNoticeShown = true;
+    addFloatingText(x, y, "経験値がたまったよ！", "#ffd166");
+    addEffect("spark", x, y + 18, "#ffd166", "ally");
+    state.message = "経験値がたまったよ！敵拠点をこわせばクリアだよ。";
   }
 
   function removeDefeated() {
@@ -827,7 +834,7 @@ button:disabled {
   function checkResult() {
     if (state.gameOver) return;
     const stage = currentStage();
-    if (state.experience >= state.targetExperience) {
+    if (state.enemyBaseHp <= 0) {
       state.gameOver = true;
       state.result = "win";
       if (!state.clearBonusApplied) {
@@ -835,7 +842,7 @@ button:disabled {
         state.clearBonusApplied = true;
       }
       addEffect("clearBurst", WIDTH / 2, 206, "#ffd166", "ally");
-      state.message = `経験値MAX! ${stage.name} クリア。勝利ボーナス +${stage.clearBonus}！`;
+      state.message = `BOSS撃破! ${stage.name} クリア。勝利ボーナス +${stage.clearBonus}！`;
     } else if (state.allyBaseHp <= 0) {
       state.gameOver = true;
       state.result = "lose";
@@ -913,16 +920,53 @@ button:disabled {
     const isAlly = team === "ally";
     const stage = currentStage();
     const maxHp = isAlly ? stage.allyBaseHp : stage.enemyBaseHp;
-    ctx.fillStyle = isAlly ? "#2b8a9f" : "#8f3d4f";
-    ctx.fillRect(x - 34, GROUND_Y - 82, 68, 106);
-    ctx.fillStyle = isAlly ? "#66d9ef" : "#ff6b6b";
+    drawBaseStructure(x, hp, team);
+    drawHpBar(x - 42, GROUND_Y - 124, 84, 9, hp, maxHp);
+  }
+
+  function drawBaseStructure(x, hp, team) {
+    const isAlly = team === "ally";
+    const body = isAlly ? "#2b8a9f" : "#8f3d4f";
+    const cap = isAlly ? "#66d9ef" : "#ff6b6b";
+    const dark = isAlly ? "#174d5b" : "#572638";
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.32)";
+    ctx.beginPath();
+    ctx.ellipse(x, GROUND_Y + 25, 50, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = dark;
+    ctx.fillRect(x - 36, GROUND_Y - 76, 72, 100);
+    ctx.fillStyle = body;
+    ctx.fillRect(x - 29, GROUND_Y - 92, 58, 116);
+
+    if (isAlly) {
+      ctx.fillStyle = "#163f4d";
+      ctx.fillRect(x + 16, GROUND_Y - 118, 12, 32);
+      ctx.fillStyle = "#a5f3fc";
+      ctx.fillRect(x + 6, GROUND_Y - 126, 34, 13);
+      ctx.fillStyle = "#dff9ff";
+      ctx.beginPath();
+      ctx.arc(x - 10, GROUND_Y - 40, 10, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = "#3a1524";
+      ctx.beginPath();
+      ctx.moveTo(x - 34, GROUND_Y - 92);
+      ctx.lineTo(x, GROUND_Y - 126);
+      ctx.lineTo(x + 34, GROUND_Y - 92);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffccd5";
+      ctx.fillRect(x - 13, GROUND_Y - 62, 26, 36);
+    }
+
+    ctx.fillStyle = cap;
     ctx.fillRect(x - 44, GROUND_Y - 104, 88, 26);
     ctx.fillStyle = "#f6f7fb";
     ctx.font = "700 13px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(isAlly ? "HOME" : "BOSS", x, GROUND_Y - 86);
-
-    drawHpBar(x - 42, GROUND_Y - 124, 84, 9, hp, maxHp);
   }
 
   function drawFighter(fighter) {
@@ -930,11 +974,21 @@ button:disabled {
     ctx.save();
     ctx.translate(fighter.x, fighter.y);
 
+    drawFighterShadow(fighter);
     ctx.fillStyle = pulse ? "#ffffff" : fighter.color;
     drawCharacterSprite(fighter, pulse);
 
     ctx.restore();
     drawHpBar(fighter.x - 18, fighter.y - fighter.height - 14, 36, 5, fighter.hp, fighter.maxHp);
+  }
+
+  function drawFighterShadow(fighter) {
+    const drawWidth = fighter.spriteWidth || fighter.width;
+    const shadowWidth = Math.max(16, drawWidth * 0.38);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+    ctx.beginPath();
+    ctx.ellipse(0, 2, shadowWidth, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   function drawCharacterSprite(fighter, pulse) {
@@ -1062,7 +1116,7 @@ button:disabled {
     ctx.fillText(stage.name, WIDTH / 2, 220);
     ctx.fillStyle = "#b8c0cf";
     ctx.font = "700 16px system-ui, sans-serif";
-    ctx.fillText("経験値を100までためよう", WIDTH / 2, 252);
+    ctx.fillText("左の敵拠点をこわそう", WIDTH / 2, 252);
     ctx.restore();
   }
 
@@ -1078,7 +1132,7 @@ button:disabled {
     ctx.fillStyle = "#f6f7fb";
     if (state.result === "win") {
       ctx.font = "900 24px system-ui, sans-serif";
-      ctx.fillText("経験値MAX!", WIDTH / 2, 252);
+      ctx.fillText("BOSS撃破!", WIDTH / 2, 252);
       ctx.font = "700 18px system-ui, sans-serif";
       ctx.fillText(`${stage.name} クリア`, WIDTH / 2, 282);
       ctx.fillStyle = "#ffd166";

@@ -122,9 +122,10 @@ const sandbox = {
 };
 
 const scriptWithProbe = scriptMatch[1].replace(
-  "  loadCharacterSprites();\n  resetGame();\n  requestAnimationFrame(loop);",
+  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  resetGame();\n  requestAnimationFrame(loop);",
   [
     "  loadCharacterSprites();",
+    "  loadStageBackgrounds();",
     "  resetGame();",
     "  globalThis.__keitoRuntimeProbe = {",
     "    addExperience,",

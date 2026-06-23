@@ -158,6 +158,24 @@ contains(
 
 contains(
   script,
+  "shadowWidth * 1.35",
+  "fighter shadow should have a wider soft outer layer"
+);
+
+contains(
+  script,
+  "rgba(0, 0, 0, 0.58)",
+  "fighter shadow center should be visible on the dark ground"
+);
+
+contains(
+  script,
+  "rgba(255, 255, 255, 0.12)",
+  "fighter shadow should include a subtle rim so it reads on dark terrain"
+);
+
+contains(
+  script,
   "function drawBaseStructure",
   "structured base renderer"
 );

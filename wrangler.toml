@@ -1,0 +1,16 @@
+name = "keito-daisenso-live-audience"
+main = "workers/live-audience.mjs"
+compatibility_date = "2026-06-24"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://emiko8628.github.io,http://127.0.0.1:8765"
+AUDIENCE_TTL_SECONDS = "60"
+
+[[durable_objects.bindings]]
+name = "LIVE_AUDIENCE_ROOM"
+class_name = "LiveAudienceRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LiveAudienceRoom"]

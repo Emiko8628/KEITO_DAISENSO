@@ -97,6 +97,26 @@ elements.get("game").height = 480;
 elements.get("game").getContext = () => createCanvasContext();
 const trackedEvents = [];
 const loadedScripts = [];
+const audienceRequests = [];
+
+function createAudienceFetch(requests, counts = [2]) {
+  return async (url, options = {}) => {
+    requests.push({
+      url,
+      method: options.method,
+      headers: options.headers,
+      body: options.body,
+      cache: options.cache
+    });
+    const count = counts.length ? counts.shift() : 2;
+    return new Response(JSON.stringify({ count, ttlSeconds: 60 }), {
+      status: 200,
+      headers: {
+        "content-type": "application/json"
+      }
+    });
+  };
+}
 
 function createRuntimeElements() {
   const runtimeElements = new Map();
@@ -113,6 +133,8 @@ function createRuntime(scriptSource, options = {}) {
   const runtimeElements = createRuntimeElements();
   const trackedEvents = [];
   const loadedScripts = [];
+  const audienceRequests = [];
+  const runtimeIntervals = [];
   const runtimeSandbox = {
     console,
     crypto: {
@@ -143,9 +165,16 @@ function createRuntime(scriptSource, options = {}) {
     performance: {
       now: () => 1000
     },
+    fetch: options.fetch || createAudienceFetch(audienceRequests),
     requestAnimationFrame() {},
+    setInterval(callback) {
+      runtimeIntervals.push(callback);
+      return runtimeIntervals.length;
+    },
+    clearInterval() {},
     trackedEvents,
-    loadedScripts
+    loadedScripts,
+    audienceRequests
   };
 
   runtimeSandbox.window = options.window || {
@@ -161,7 +190,8 @@ function createRuntime(scriptSource, options = {}) {
     elements: runtimeElements,
     sandbox: runtimeSandbox,
     loadedScripts,
-    trackedEvents
+    trackedEvents,
+    audienceRequests
   };
 }
 
@@ -195,9 +225,15 @@ const sandbox = {
   performance: {
     now: () => 1000
   },
+  fetch: createAudienceFetch(audienceRequests),
   requestAnimationFrame() {},
+  setInterval() {
+    return 1;
+  },
+  clearInterval() {},
   trackedEvents,
-  loadedScripts
+  loadedScripts,
+  audienceRequests
 };
 
 sandbox.window = {
@@ -208,31 +244,47 @@ sandbox.window = {
 };
 
 const scriptWithProbe = scriptMatch[1].replace(
-  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  initializeAnalyticsProvider();\n  resetGame();\n  requestAnimationFrame(loop);",
+  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  initializeAnalyticsProvider();\n  resetGame();\n  initializeLiveAudience();\n  requestAnimationFrame(loop);",
   [
     "  loadCharacterSprites();",
     "  loadStageBackgrounds();",
     "  initializeAnalyticsProvider();",
     "  resetGame();",
+    "  initializeLiveAudience();",
     "  globalThis.__keitoRuntimeProbe = {",
     "    addExperience,",
     "    checkResult,",
     "    getAnalyticsConfig: () => ANALYTICS_CONFIG,",
+    "    getLiveAudienceConfig: () => LIVE_AUDIENCE_CONFIG,",
+    "    getAudienceRequests: () => audienceRequests,",
     "    getLoadedScripts: () => loadedScripts,",
     "    getState: () => state,",
     "    getTrackedEvents: () => trackedEvents,",
+    "    trackLiveAudienceHeartbeat,",
     "    trackGameEvent",
     "  };",
     "  requestAnimationFrame(loop);"
   ].join("\n")
 );
 
+async function main() {
 vm.runInNewContext(scriptWithProbe, sandbox, { filename: "game.html" });
+await sandbox.__keitoRuntimeProbe.trackLiveAudienceHeartbeat();
 
 assert.strictEqual(elements.get("stageChapter").textContent, "大地編");
 assert.strictEqual(elements.get("stageName").textContent, "大地をゆるがすワンワンステージ");
 assert.strictEqual(elements.get("money").textContent, "180");
-assert.strictEqual(elements.get("viewerCount").textContent, "3");
+assert.strictEqual(elements.get("viewerCount").textContent, "2");
+assert.strictEqual(
+  sandbox.__keitoRuntimeProbe.getAudienceRequests().at(-1).url,
+  "https://keito-daisenso-live-audience.futunex1115.workers.dev/heartbeat",
+  "live audience heartbeat should use the configured Worker endpoint"
+);
+assert.deepStrictEqual(
+  JSON.parse(sandbox.__keitoRuntimeProbe.getAudienceRequests().at(-1).body),
+  { sessionId: "runtime-id" },
+  "live audience heartbeat should send only the page-scoped session id"
+);
 assert.strictEqual(elements.get("experience").textContent, "0 / 100");
 assert.strictEqual(elements.get("spawnNeko").disabled, false);
 assert.match(
@@ -243,7 +295,7 @@ assert.match(
 
 elements.get("spawnNeko").click();
 assert.strictEqual(elements.get("money").textContent, "130", "summoning まるねこ should spend 50");
-assert.strictEqual(elements.get("viewerCount").textContent, "4", "summoning should make the local audience presentation feel live");
+assert.strictEqual(elements.get("viewerCount").textContent, "2", "summoning should not fake audience changes locally");
 assert.strictEqual(elements.get("spawnNeko").textContent, "まるねこ 50", "cooldown should not add waiting seconds to the label");
 assert.ok(
   !/あと|秒/.test(elements.get("spawnNeko").textContent),
@@ -261,7 +313,7 @@ assert.strictEqual(elements.get("money").textContent, "130", "cooldown should bl
 
 elements.get("restart").click();
 assert.strictEqual(elements.get("money").textContent, "180", "restart should reset money");
-assert.strictEqual(elements.get("viewerCount").textContent, "3", "restart should reset the local audience presentation");
+assert.strictEqual(elements.get("viewerCount").textContent, "2", "restart should keep the latest live audience count");
 assert.strictEqual(elements.get("experience").textContent, "0 / 100", "restart should reset experience");
 assert.strictEqual(elements.get("spawnNeko").textContent, "まるねこ 50", "restart should reset summon label");
 assert.strictEqual(elements.get("spawnNeko").disabled, false, "restart should reset cooldown");
@@ -465,17 +517,28 @@ assert.deepStrictEqual(
   "disabled fallback should not send events when explicitly configured off"
 );
 
-const { elements: blockedElements } = createRuntime(scriptWithProbe, {
+const { elements: blockedElements, sandbox: blockedSandbox } = createRuntime(scriptWithProbe, {
   window: {
     dataLayer: [],
     gtag() {
       throw new Error("analytics blocked");
     }
+  },
+  fetch: async () => {
+    throw new Error("live audience blocked");
   }
 });
 
+await blockedSandbox.__keitoRuntimeProbe.trackLiveAudienceHeartbeat();
+assert.strictEqual(blockedElements.get("viewerCount").textContent, "--");
 blockedElements.get("spawnNeko").click();
 assert.strictEqual(blockedElements.get("money").textContent, "130");
 assert.match(blockedElements.get("message").innerHTML, /まるねこを召喚した/);
 
 console.log("game runtime verification passed");
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

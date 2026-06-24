@@ -21,6 +21,12 @@ const requiredAllySprites = [
   { name: "こうげきねこ", file: "assets/ally-battle-neko.png", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" }
 ];
 const requiredStageBackground = "assets/stage-earth-wanwan-background.png";
+const requiredBaseSprites = [
+  "assets/base-ally-blue-castle.png",
+  "assets/base-enemy-stage-1-gold-castle.png",
+  "assets/base-enemy-stage-2-green-castle.png",
+  "assets/base-enemy-stage-3-red-black-castle.png"
+];
 
 function numberConstant(name) {
   const match = script.match(new RegExp(`const ${name} = ([^;]+);`));
@@ -229,6 +235,62 @@ contains(
   script,
   "function drawBaseStructure",
   "structured base renderer"
+);
+
+for (const sprite of requiredBaseSprites) {
+  assert(
+    fs.existsSync(sprite),
+    `missing base sprite asset: ${sprite}`
+  );
+  contains(script, sprite, `${sprite} base sprite reference`);
+}
+
+contains(
+  script,
+  'const ALLY_BASE_SPRITE = "assets/base-ally-blue-castle.png"',
+  "shared ally base sprite"
+);
+
+contains(
+  script,
+  'enemyBaseSprite: "assets/base-enemy-stage-1-gold-castle.png"',
+  "first stage enemy base sprite"
+);
+
+contains(
+  script,
+  "const FUTURE_ENEMY_BASE_SPRITES = Object.freeze",
+  "future enemy base sprite registry"
+);
+
+contains(
+  script,
+  "const baseImageCache = new Map",
+  "base image cache"
+);
+
+contains(
+  script,
+  "function loadBaseImages",
+  "base image loader"
+);
+
+contains(
+  script,
+  "function drawBaseImage",
+  "base image renderer"
+);
+
+contains(
+  script,
+  "if (drawBaseImage(x, team)) return;",
+  "base drawing should prefer loaded image assets"
+);
+
+contains(
+  script,
+  "drawCanvasBaseStructure(x, hp, team);",
+  "base drawing should keep a canvas fallback"
 );
 
 contains(

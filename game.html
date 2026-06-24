@@ -316,9 +316,9 @@ button:disabled {
           <span>BOSS <strong id="enemyBase">70</strong></span>
           <span>撃破 <strong id="defeats">0</strong></span>
         </div>
-        <div class="audience-line" aria-label="ゲーム演出の参戦中人数">
+        <div class="audience-line" aria-label="現在の参戦人数">
           <span class="audience-pulse" aria-hidden="true"></span>
-          <span>参戦中 <strong id="viewerCount">3</strong></span>
+          <span>参戦中 <strong id="viewerCount">--</strong></span>
         </div>
       </div>
     </div>
@@ -334,7 +334,7 @@ button:disabled {
     </div>
   </section>
 
-  <p class="note">非公式ファン制作｜Google Analyticsで利用状況を計測しています。ゲーム内の入力内容や個人情報は保存しません。</p>
+  <p class="note">非公式ファン制作｜Google Analyticsで利用状況を計測し、現在の参戦人数表示のため匿名の一時信号を送信します。個人情報やゲーム内入力内容は保存しません。</p>
 </main>
 
 <script>
@@ -372,6 +372,13 @@ button:disabled {
     scriptSrc: "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"
   };
 
+  const LIVE_AUDIENCE_CONFIG = {
+    enabled: true,
+    endpoint: "https://keito-daisenso-live-audience.emiko8628.workers.dev/heartbeat",
+    heartbeatMs: 20000,
+    staleAfterMs: 60000
+  };
+
   const ANALYTICS_EVENTS = Object.freeze({
     gameOpen: "game_open",
     firstSummon: "first_summon",
@@ -388,6 +395,11 @@ button:disabled {
     gameOpenSent: false,
     firstSummonSent: false,
     stageClearSent: false
+  };
+
+  const liveAudienceSession = {
+    sessionId: createLiveAudienceSessionId(),
+    intervalId: null
   };
 
   const STAGES = [
@@ -608,6 +620,52 @@ button:disabled {
     if (analyticsSession.stageClearSent) return;
     analyticsSession.stageClearSent = true;
     trackGameEvent(ANALYTICS_EVENTS.stageClear, analyticsStageProps());
+  }
+
+  function createLiveAudienceSessionId() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    return `page-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  function initializeLiveAudience() {
+    if (!LIVE_AUDIENCE_CONFIG.enabled || !LIVE_AUDIENCE_CONFIG.endpoint || typeof fetch !== "function") {
+      updateLiveAudienceDisplay(null);
+      return;
+    }
+    trackLiveAudienceHeartbeat();
+    if (typeof setInterval === "function") {
+      liveAudienceSession.intervalId = setInterval(trackLiveAudienceHeartbeat, LIVE_AUDIENCE_CONFIG.heartbeatMs);
+    }
+  }
+
+  function trackLiveAudienceHeartbeat() {
+    return fetch(LIVE_AUDIENCE_CONFIG.endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        sessionId: liveAudienceSession.sessionId
+      }),
+      cache: "no-store"
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("live audience heartbeat failed");
+        return response.json();
+      })
+      .then((data) => {
+        if (!Number.isInteger(data.count) || data.count < 0) throw new Error("invalid live audience count");
+        updateLiveAudienceDisplay(data.count);
+      })
+      .catch(() => {
+        updateLiveAudienceDisplay(null);
+      });
+  }
+
+  function updateLiveAudienceDisplay(count) {
+    ui.viewerCount.textContent = Number.isInteger(count) ? String(count) : "--";
   }
 
   function resetGame() {
@@ -942,15 +1000,6 @@ button:disabled {
     state.message = "経験値がたまったよ！敵拠点をこわせばクリアだよ。";
   }
 
-  function estimateRealtimeAudience() {
-    const unitBoost = Math.min(3, state.units.length);
-    const enemyBoost = Math.min(2, state.enemies.length);
-    const defeatBoost = Math.min(2, state.defeats);
-    const tempoBoost = Math.floor(state.elapsed / 7000) % 2;
-    const clearBoost = state.result === "win" ? 1 : 0;
-    return Math.max(3, Math.min(9, 3 + unitBoost + enemyBoost + defeatBoost + tempoBoost + clearBoost));
-  }
-
   function removeDefeated() {
     state.enemies = state.enemies.filter((enemy) => {
       if (enemy.hp > 0) return true;
@@ -1050,7 +1099,6 @@ button:disabled {
     ui.allyBase.textContent = Math.ceil(state.allyBaseHp);
     ui.enemyBase.textContent = Math.ceil(state.enemyBaseHp);
     ui.defeats.textContent = state.defeats;
-    ui.viewerCount.textContent = estimateRealtimeAudience();
     ui.experience.textContent = `${Math.floor(state.experience)} / ${state.targetExperience}`;
     ui.message.innerHTML = state.gameOver
       ? `<strong>${state.message}</strong>`
@@ -1398,6 +1446,7 @@ button:disabled {
   loadStageBackgrounds();
   initializeAnalyticsProvider();
   resetGame();
+  initializeLiveAudience();
   requestAnimationFrame(loop);
 })();
 </script>

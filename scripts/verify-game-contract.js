@@ -3,6 +3,8 @@ const assert = require("assert");
 
 const html = fs.readFileSync("game.html", "utf8");
 const readme = fs.readFileSync("README.md", "utf8");
+const worker = fs.readFileSync("workers/live-audience.mjs", "utf8");
+const wrangler = fs.readFileSync("wrangler.toml", "utf8");
 const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
 
 assert(scriptMatch, "game.html must include an inline script block");
@@ -303,7 +305,7 @@ contains(
 
 contains(
   html,
-  "Google Analyticsで利用状況を計測しています。ゲーム内の入力内容や個人情報は保存しません。",
+  "Google Analyticsで利用状況を計測し、現在の参戦人数表示のため匿名の一時信号を送信します。個人情報やゲーム内入力内容は保存しません。",
   "analytics-enabled footer copy"
 );
 
@@ -361,6 +363,7 @@ assert(
 );
 
 const allowedExternalUrls = [
+  "https://keito-daisenso-live-audience.emiko8628.workers.dev/heartbeat",
   "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"
 ];
 const externalUrls = Array.from(new Set(
@@ -433,7 +436,7 @@ contains(
 contains(
   html,
   'id="viewerCount"',
-  "realtime-style audience counter"
+  "live audience counter"
 );
 
 contains(
@@ -444,14 +447,67 @@ contains(
 
 contains(
   readme,
-  "画面内の参戦中人数はゲーム演出で、外部通信や実ユーザー数の取得は行いません",
-  "README should disclose that the audience counter is local presentation"
+  "現在の参戦人数を表示するため、Cloudflare Workerへ匿名の一時セッション信号を送信します",
+  "README should disclose the anonymous live audience heartbeat"
 );
 
 contains(
   script,
-  "function estimateRealtimeAudience",
-  "audience count should be generated locally as a game presentation layer"
+  "const LIVE_AUDIENCE_CONFIG = {",
+  "live audience config boundary"
+);
+
+contains(
+  script,
+  "endpoint: \"https://keito-daisenso-live-audience.emiko8628.workers.dev/heartbeat\"",
+  "live audience endpoint"
+);
+
+contains(
+  script,
+  "function initializeLiveAudience",
+  "live audience initializer"
+);
+
+contains(
+  script,
+  "function trackLiveAudienceHeartbeat",
+  "live audience heartbeat"
+);
+
+assert(
+  !script.includes("function estimateRealtimeAudience"),
+  "live audience count must not use the old local presentation estimator"
+);
+
+contains(
+  worker,
+  "export class LiveAudienceRoom",
+  "Cloudflare Durable Object live audience room"
+);
+
+contains(
+  worker,
+  "ALLOWED_ORIGINS",
+  "Worker CORS allowlist"
+);
+
+contains(
+  wrangler,
+  'name = "keito-daisenso-live-audience"',
+  "Cloudflare Worker deployment name"
+);
+
+contains(
+  wrangler,
+  'name = "LIVE_AUDIENCE_ROOM"',
+  "Cloudflare Durable Object binding"
+);
+
+contains(
+  wrangler,
+  'ALLOWED_ORIGINS = "https://emiko8628.github.io,http://127.0.0.1:8765"',
+  "Cloudflare Worker allowed origins"
 );
 
 contains(

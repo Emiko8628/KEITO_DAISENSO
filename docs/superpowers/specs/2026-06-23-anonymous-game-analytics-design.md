@@ -34,7 +34,7 @@ Provider rules:
 - Do not enable enhanced measurement unless a later privacy review explicitly changes this design.
 - Do not add automatic page views from the game code.
 - Do not add new custom events without updating the allowlist, README, and verification scripts.
-- Do not read Google Analytics data back into the game. Any in-game audience display must stay local presentation or use a separately reviewed anonymous aggregation service.
+- Do not read Google Analytics data back into the game. Any real in-game audience display must use a separately reviewed anonymous aggregation service.
 
 ## Privacy Contract
 

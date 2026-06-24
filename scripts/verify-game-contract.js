@@ -432,6 +432,30 @@ contains(
 
 contains(
   html,
+  'id="viewerCount"',
+  "realtime-style audience counter"
+);
+
+contains(
+  html,
+  'class="audience-line"',
+  "audience counter should live inside the HUD"
+);
+
+contains(
+  readme,
+  "画面内の参戦中人数はゲーム演出で、外部通信や実ユーザー数の取得は行いません",
+  "README should disclose that the audience counter is local presentation"
+);
+
+contains(
+  script,
+  "function estimateRealtimeAudience",
+  "audience count should be generated locally as a game presentation layer"
+);
+
+contains(
+  html,
   'class="summon-deck"',
   "summon card deck"
 );

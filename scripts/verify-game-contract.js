@@ -273,37 +273,37 @@ contains(
 
 contains(
   script,
-  'provider: "plausible"',
-  "analytics provider must be plausible"
+  'provider: "google_analytics"',
+  "analytics provider must be Google Analytics"
 );
 
 contains(
   script,
-  'siteDomain: "emiko8628.github.io/KEITO_DAISENSO"',
-  "analytics target domain"
+  'measurementId: "G-930NR1L6KX"',
+  "Google Analytics measurement ID"
 );
 
 contains(
   script,
-  'scriptSrc: "https://plausible.io/js/script.js"',
-  "analytics script URL"
+  'scriptSrc: "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"',
+  "Google tag script URL"
 );
 
 contains(
   script,
-  'eventEndpoint: "https://plausible.io/api/event"',
-  "analytics event endpoint"
+  "function trackGoogleAnalyticsEvent",
+  "Google Analytics event adapter"
 );
 
 contains(
   html,
-  "匿名の利用状況だけを取得しています。ゲーム内の入力内容や個人情報は保存しません。",
+  "Google Analyticsで利用状況を計測しています。ゲーム内の入力内容や個人情報は保存しません。",
   "analytics-enabled footer copy"
 );
 
 contains(
   readme,
-  "匿名の利用状況計測を有効にする場合のみ、設定した解析サービスへ game_open / first_summon / stage_clear を送信します",
+  "Google Analyticsを有効にする場合のみ、game_open / first_summon / stage_clear を送信します",
   "README analytics disclosure"
 );
 
@@ -355,8 +355,7 @@ assert(
 );
 
 const allowedExternalUrls = [
-  "https://plausible.io/api/event",
-  "https://plausible.io/js/script.js"
+  "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"
 ];
 const externalUrls = Array.from(new Set(
   html.match(/https?:\/\/[^"'`\s<>)]+/g) || []
@@ -364,7 +363,14 @@ const externalUrls = Array.from(new Set(
 assert.deepStrictEqual(
   externalUrls,
   allowedExternalUrls,
-  "game.html must only allow the selected Plausible script and endpoint"
+  "game.html must only allow the selected Google tag script"
+);
+
+const legacyAnalyticsProvider = "plaus" + "ible";
+assert(
+  !script.includes(legacyAnalyticsProvider) &&
+    !script.includes(legacyAnalyticsProvider[0].toUpperCase() + legacyAnalyticsProvider.slice(1)),
+  "legacy analytics adapter must be removed when Google Analytics is selected"
 );
 
 assert(

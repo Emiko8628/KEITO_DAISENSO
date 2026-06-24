@@ -148,8 +148,9 @@ function createRuntime(scriptSource, options = {}) {
   };
 
   runtimeSandbox.window = options.window || {
-    plausible(eventName, payload) {
-      trackedEvents.push({ eventName, payload });
+    dataLayer: trackedEvents,
+    gtag(...args) {
+      trackedEvents.push(args);
     }
   };
 
@@ -199,8 +200,9 @@ const sandbox = {
 };
 
 sandbox.window = {
-  plausible(eventName, payload) {
-    trackedEvents.push({ eventName, payload });
+  dataLayer: trackedEvents,
+  gtag(...args) {
+    trackedEvents.push(args);
   }
 };
 
@@ -263,7 +265,8 @@ assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().experienceNoticeShown,
 assert.deepStrictEqual(
   sandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .map((event) => event.eventName),
+    .filter((event) => event[0] === "event")
+    .map((event) => event[1]),
   ["game_open", "first_summon"],
   "enabled analytics should keep one game_open and one first_summon after restart"
 );
@@ -320,12 +323,11 @@ assert.deepStrictEqual(
   JSON.parse(JSON.stringify(enabledSandbox.__keitoRuntimeProbe.getAnalyticsConfig())),
   {
     enabled: true,
-    provider: "plausible",
-    siteDomain: "emiko8628.github.io/KEITO_DAISENSO",
-    scriptSrc: "https://plausible.io/js/script.js",
-    eventEndpoint: "https://plausible.io/api/event"
+    provider: "google_analytics",
+    measurementId: "G-930NR1L6KX",
+    scriptSrc: "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"
   },
-  "analytics config should use the confirmed Plausible provider values"
+  "analytics config should use the confirmed Google Analytics provider values"
 );
 
 assert.strictEqual(
@@ -335,19 +337,28 @@ assert.strictEqual(
 );
 assert.strictEqual(
   enabledSandbox.__keitoRuntimeProbe.getLoadedScripts()[0].dataset.domain,
-  "emiko8628.github.io/KEITO_DAISENSO",
-  "analytics loader should use the confirmed target domain"
+  undefined,
+  "Google tag loader should not use a legacy data-domain"
 );
 assert.strictEqual(
   enabledSandbox.__keitoRuntimeProbe.getLoadedScripts()[0].src,
-  "https://plausible.io/js/script.js",
+  "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX",
   "analytics loader should use the confirmed script URL"
 );
 
 assert.deepStrictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .map((event) => event.eventName),
+    .filter((event) => event[0] === "config"),
+  [["config", "G-930NR1L6KX"]],
+  "Google Analytics should be configured with the confirmed measurement ID"
+);
+
+assert.deepStrictEqual(
+  enabledSandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .filter((event) => event[0] === "event")
+    .map((event) => event[1]),
   ["game_open"],
   "enabled analytics should send one game_open after page start"
 );
@@ -356,7 +367,8 @@ enabledElements.get("restart").click();
 assert.deepStrictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .map((event) => event.eventName),
+    .filter((event) => event[0] === "event")
+    .map((event) => event[1]),
   ["game_open"],
   "restart should not duplicate game_open"
 );
@@ -367,7 +379,7 @@ enabledElements.get("spawnNeko").click();
 assert.strictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .filter((event) => event.eventName === "first_summon").length,
+    .filter((event) => event[0] === "event" && event[1] === "first_summon").length,
   1,
   "first_summon should be sent once per page session"
 );
@@ -375,7 +387,7 @@ assert.deepStrictEqual(
   JSON.parse(JSON.stringify(
     enabledSandbox.__keitoRuntimeProbe
       .getTrackedEvents()
-      .find((event) => event.eventName === "first_summon").payload.props
+      .find((event) => event[0] === "event" && event[1] === "first_summon")[2]
   )),
   {
     stageId: "earth-wanwan-01",
@@ -393,7 +405,7 @@ enabledSandbox.__keitoRuntimeProbe.checkResult();
 assert.strictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .filter((event) => event.eventName === "stage_clear").length,
+    .filter((event) => event[0] === "event" && event[1] === "stage_clear").length,
   1,
   "stage_clear should be sent once per page session"
 );
@@ -423,7 +435,7 @@ propsSandbox.__keitoRuntimeProbe.trackGameEvent("first_summon", {
   freeText: "should not leave the page"
 });
 assert.deepStrictEqual(
-  JSON.parse(JSON.stringify(propsSandbox.__keitoRuntimeProbe.getTrackedEvents().at(-1).payload.props)),
+  JSON.parse(JSON.stringify(propsSandbox.__keitoRuntimeProbe.getTrackedEvents().at(-1)[2])),
   {
     stageId: "earth-wanwan-01",
     chapter: "大地編",
@@ -435,7 +447,7 @@ assert.deepStrictEqual(
 );
 
 const disabledScript = scriptWithProbe.replace(
-  "enabled: true,\n    provider: \"plausible\",",
+  "enabled: true,\n    provider: \"google_analytics\",",
   "enabled: false,\n    provider: \"noop\","
 );
 const {
@@ -449,7 +461,8 @@ assert.deepStrictEqual(
 
 const { elements: blockedElements } = createRuntime(scriptWithProbe, {
   window: {
-    plausible() {
+    dataLayer: [],
+    gtag() {
       throw new Error("analytics blocked");
     }
   }

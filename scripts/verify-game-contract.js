@@ -296,6 +296,12 @@ contains(
 );
 
 contains(
+  script,
+  "send_page_view: false",
+  "Google Analytics automatic page_view should stay disabled"
+);
+
+contains(
   html,
   "Google Analyticsで利用状況を計測しています。ゲーム内の入力内容や個人情報は保存しません。",
   "analytics-enabled footer copy"

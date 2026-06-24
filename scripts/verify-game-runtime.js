@@ -347,10 +347,12 @@ assert.strictEqual(
 );
 
 assert.deepStrictEqual(
-  enabledSandbox.__keitoRuntimeProbe
-    .getTrackedEvents()
-    .filter((event) => event[0] === "config"),
-  [["config", "G-930NR1L6KX"]],
+  JSON.parse(JSON.stringify(
+    enabledSandbox.__keitoRuntimeProbe
+      .getTrackedEvents()
+      .filter((event) => event[0] === "config")
+  )),
+  [["config", "G-930NR1L6KX", { send_page_view: false }]],
   "Google Analytics should be configured with the confirmed measurement ID"
 );
 

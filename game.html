@@ -524,7 +524,7 @@ button:disabled {
       };
       try {
         window.gtag("js", new Date());
-        window.gtag("config", ANALYTICS_CONFIG.measurementId);
+        window.gtag("config", ANALYTICS_CONFIG.measurementId, { send_page_view: false });
       } catch (error) {
         trackNoopEvent("google_analytics_init", {});
       }

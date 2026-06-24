@@ -425,6 +425,7 @@ providerEvents = game_open, first_summon, stage_clear
 ```
 
 For Google Analytics 4, confirm the web data stream is created for `https://emiko8628.github.io/KEITO_DAISENSO/` and that enhanced measurement is disabled unless a later privacy review explicitly enables it.
+The Google tag config should set `{ send_page_view: false }` so the game sends only the explicit `game_open`, `first_summon`, and `stage_clear` events from `trackGameEvent`.
 
 - [ ] **Step 2: Update public copy in the same PR**
 
@@ -457,6 +458,7 @@ const ANALYTICS_CONFIG = {
 ```
 
 Add a tiny loader guarded by `ANALYTICS_CONFIG` that appends exactly one Google tag script with the configured `measurementId` and `scriptSrc`. Do not add Google Tag Manager. Do not add arbitrary remote scripts. If a Content Security Policy is introduced later, update it to allow only `https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX` and the Google Analytics endpoints used by the Google tag runtime.
+Configure Google Analytics with `{ send_page_view: false }`; `game_open` remains the explicit page/game-open event.
 
 - [ ] **Step 4: Update external communication scan**
 

@@ -14,31 +14,27 @@ The first useful metric is not just page views. The game should count:
 
 ## Current State
 
-The current public contract says the game has no external communication:
+The live provider is Google Analytics 4:
 
-- `game.html` footer says the page runs without external communication or storage.
-- `README.md` says the project is safe static HTML with no external communication.
-- Current verification scans for `fetch`, `XMLHttpRequest`, storage APIs, external scripts, and HTTP URLs.
+- provider: Google Analytics 4
+- measurement id: `G-930NR1L6KX`
+- script URL: `https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX`
+- automatic `page_view`: disabled with `send_page_view: false`
+- sent events: `game_open`, `first_summon`, and `stage_clear`
 
-Because analytics requires external communication, adding live analytics changes the safety contract. The implementation must update the user-facing wording before any external tracking request is enabled.
+The public contract now discloses Google Analytics usage in the footer and README. The game still must not add any unrelated external communication, storage identifiers, cookies, or free-form player data.
 
 ## Recommended Approach
 
-Use a privacy-first analytics provider with custom events. The first implementation should target Plausible-style events because the game only needs three anonymous counters and no player profiles.
+Keep the Google Analytics integration behind the existing adapter boundary and keep the measured surface intentionally small.
 
-Recommended provider order:
+Provider rules:
 
-1. Plausible-compatible adapter
-2. Umami-compatible adapter
-3. Page-view-only provider such as Cloudflare Web Analytics
-
-Plausible/Umami are better fits than page-view-only analytics because the game needs gameplay events like `first_summon` and `stage_clear`.
-
-Provider setup must include dashboard configuration, not only code:
-
-- Plausible requires matching custom event goals for `game_open`, `first_summon`, and `stage_clear`; otherwise events may be received but not appear as dashboard conversions.
-- Umami can record named events through its tracker, but event data must stay on the approved allowlist below.
-- Cloudflare Web Analytics remains a page-view fallback only unless a separate custom-event-capable setup is confirmed.
+- Do not add Google Tag Manager.
+- Do not enable enhanced measurement unless a later privacy review explicitly changes this design.
+- Do not add automatic page views from the game code.
+- Do not add new custom events without updating the allowlist, README, and verification scripts.
+- Do not read Google Analytics data back into the game. Any in-game audience display must stay local presentation or use a separately reviewed anonymous aggregation service.
 
 ## Privacy Contract
 
@@ -74,7 +70,7 @@ Responsibilities:
 
 - `ANALYTICS_CONFIG`: controls whether analytics is enabled and which adapter is used.
 - `trackGameEvent(eventName, props)`: single public game-code entrypoint for analytics.
-- `trackPlausibleEvent(eventName, props)`: provider-specific adapter.
+- `trackGoogleAnalyticsEvent(eventName, props)`: provider-specific adapter.
 - `trackNoopEvent(eventName, props)`: safe disabled mode.
 - `analyticsSession`: page-session state outside `resetGame` that prevents duplicate `game_open`, duplicate `first_summon`, and duplicate `stage_clear` when the player presses restart.
 
@@ -97,22 +93,20 @@ When analytics is disabled:
 
 When analytics is enabled:
 
-`非公式ファン制作｜匿名の利用状況だけを取得しています。ゲーム内の入力内容や個人情報は保存しません。`
+`非公式ファン制作｜Google Analyticsで利用状況を計測しています。ゲーム内の入力内容や個人情報は保存しません。`
 
 The README must also change from "外部通信なし" to a precise statement:
 
-`ゲーム本体は静的HTMLです。匿名の利用状況計測を有効にする場合のみ、設定した解析サービスへ game_open / first_summon / stage_clear を送信します。`
+`Google Analyticsを有効にする場合のみ、game_open / first_summon / stage_clear を送信します。`
 
 ## Implementation Gate
 
-Do not enable live analytics until all of these are true:
+Do not expand live analytics until all of these are true:
 
-- The provider is chosen.
-- The provider site/domain id is known.
-- Any provider dashboard setup needed for these events is complete.
+- The provider, measurement id, script URL, and domain are reviewed again.
+- Google Analytics enhanced measurement remains off, or a later privacy review explicitly updates this design.
 - The footer and README copy are updated in the same PR.
-- Tests prove analytics is disabled by default unless configured.
-- Tests prove only approved event names are sent.
+- Tests prove only approved event names and allowlisted props are sent.
 - Tests prove restart does not duplicate page-session events.
 - Tests prove provider failure or script blocking never stops gameplay.
 - The external communication scan is updated to allow exactly the chosen analytics endpoint or script.

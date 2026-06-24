@@ -2,6 +2,7 @@ const fs = require("fs");
 const assert = require("assert");
 
 const html = fs.readFileSync("game.html", "utf8");
+const readme = fs.readFileSync("README.md", "utf8");
 const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
 
 assert(scriptMatch, "game.html must include an inline script block");
@@ -266,14 +267,44 @@ contains(
 
 contains(
   script,
-  "enabled: false",
-  "analytics must be disabled by default"
+  "enabled: true",
+  "analytics provider must be enabled only in the provider enablement PR"
 );
 
 contains(
   script,
-  'provider: "noop"',
-  "analytics must use noop provider by default"
+  'provider: "plausible"',
+  "analytics provider must be plausible"
+);
+
+contains(
+  script,
+  'siteDomain: "emiko8628.github.io/KEITO_DAISENSO"',
+  "analytics target domain"
+);
+
+contains(
+  script,
+  'scriptSrc: "https://plausible.io/js/script.js"',
+  "analytics script URL"
+);
+
+contains(
+  script,
+  'eventEndpoint: "https://plausible.io/api/event"',
+  "analytics event endpoint"
+);
+
+contains(
+  html,
+  "匿名の利用状況だけを取得しています。ゲーム内の入力内容や個人情報は保存しません。",
+  "analytics-enabled footer copy"
+);
+
+contains(
+  readme,
+  "匿名の利用状況計測を有効にする場合のみ、設定した解析サービスへ game_open / first_summon / stage_clear を送信します",
+  "README analytics disclosure"
 );
 
 contains(
@@ -321,6 +352,19 @@ contains(
 assert(
   !script.includes("localStorage") && !script.includes("sessionStorage"),
   "analytics must not add browser storage identifiers"
+);
+
+const allowedExternalUrls = [
+  "https://plausible.io/api/event",
+  "https://plausible.io/js/script.js"
+];
+const externalUrls = Array.from(new Set(
+  html.match(/https?:\/\/[^"'`\s<>)]+/g) || []
+)).sort();
+assert.deepStrictEqual(
+  externalUrls,
+  allowedExternalUrls,
+  "game.html must only allow the selected Plausible script and endpoint"
 );
 
 assert(

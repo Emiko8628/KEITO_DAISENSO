@@ -289,7 +289,7 @@ button:disabled {
     </div>
   </section>
 
-  <p class="note">非公式ファン制作｜このページは外部通信・保存処理なしで動きます。</p>
+  <p class="note">非公式ファン制作｜匿名の利用状況だけを取得しています。ゲーム内の入力内容や個人情報は保存しません。</p>
 </main>
 
 <script>
@@ -320,10 +320,11 @@ button:disabled {
   const ALLY_BASE_X = WIDTH - 72;
   const ENEMY_BASE_X = 72;
   const ANALYTICS_CONFIG = {
-    enabled: false,
-    provider: "noop",
-    siteDomain: "",
-    scriptSrc: ""
+    enabled: true,
+    provider: "plausible",
+    siteDomain: "emiko8628.github.io/KEITO_DAISENSO",
+    scriptSrc: "https://plausible.io/js/script.js",
+    eventEndpoint: "https://plausible.io/api/event"
   };
 
   const ANALYTICS_EVENTS = Object.freeze({
@@ -512,6 +513,28 @@ button:disabled {
     } catch (error) {
       trackNoopEvent(eventName, props);
     }
+  }
+
+  function initializeAnalyticsProvider() {
+    if (!ANALYTICS_CONFIG.enabled || ANALYTICS_CONFIG.provider !== "plausible") return;
+    if (!ANALYTICS_CONFIG.siteDomain || !ANALYTICS_CONFIG.scriptSrc) return;
+    if (typeof window !== "undefined") {
+      window.plausible = window.plausible || function plausibleQueue() {
+        (window.plausible.q = window.plausible.q || []).push(arguments);
+      };
+    }
+    if (typeof document === "undefined" || !document.head || typeof document.createElement !== "function") return;
+    if (
+      typeof document.querySelector === "function" &&
+      document.querySelector(`script[src="${ANALYTICS_CONFIG.scriptSrc}"]`)
+    ) {
+      return;
+    }
+    const providerScript = document.createElement("script");
+    providerScript.defer = true;
+    providerScript.dataset.domain = ANALYTICS_CONFIG.siteDomain;
+    providerScript.src = ANALYTICS_CONFIG.scriptSrc;
+    document.head.appendChild(providerScript);
   }
 
   function trackGameOpen() {
@@ -1312,6 +1335,7 @@ button:disabled {
 
   loadCharacterSprites();
   loadStageBackgrounds();
+  initializeAnalyticsProvider();
   resetGame();
   requestAnimationFrame(loop);
 })();

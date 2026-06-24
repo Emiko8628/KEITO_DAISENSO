@@ -415,8 +415,8 @@ Required values:
 
 ```text
 provider = plausible
-siteDomain = emiko8628.github.io/KEITO_DAISENSO or the chosen custom domain
-scriptSrc = the provider-approved script URL
+siteDomain = emiko8628.github.io/KEITO_DAISENSO
+scriptSrc = https://plausible.io/js/script.js
 providerDashboardGoals = game_open, first_summon, stage_clear
 ```
 
@@ -447,12 +447,13 @@ Set:
 const ANALYTICS_CONFIG = {
   enabled: true,
   provider: "plausible",
-  siteDomain: "CONFIRMED_DOMAIN",
-  scriptSrc: "CONFIRMED_SCRIPT_URL"
+  siteDomain: "emiko8628.github.io/KEITO_DAISENSO",
+  scriptSrc: "https://plausible.io/js/script.js",
+  eventEndpoint: "https://plausible.io/api/event"
 };
 ```
 
-If the provider requires a browser script, add exactly one provider-approved `<script>` tag or a tiny loader guarded by `ANALYTICS_CONFIG`. Do not add a tag manager. Do not add arbitrary remote scripts. If a Content Security Policy is introduced later, update it to allow only the selected analytics script and endpoint.
+Add a tiny loader guarded by `ANALYTICS_CONFIG` that appends exactly one Plausible script with the configured `siteDomain` and `scriptSrc`. Do not add a tag manager. Do not add arbitrary remote scripts. If a Content Security Policy is introduced later, update it to allow only `https://plausible.io/js/script.js` and `https://plausible.io/api/event`.
 
 - [ ] **Step 4: Update external communication scan**
 
@@ -553,7 +554,7 @@ Spec coverage:
 
 Placeholder scan:
 
-- The only configurable values are deliberately named `CONFIRMED_DOMAIN` and `CONFIRMED_SCRIPT_URL` in the provider-enabling task because live provider details must not be guessed.
+- Provider enablement values are concrete for this PR: Plausible, `emiko8628.github.io/KEITO_DAISENSO`, `https://plausible.io/js/script.js`, and `game_open` / `first_summon` / `stage_clear`.
 
 Type consistency:
 

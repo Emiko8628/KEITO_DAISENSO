@@ -11,6 +11,7 @@ function createElement(id) {
   const element = {
     id,
     disabled: false,
+    dataset: {},
     listeners: {},
     style: {
       values: {},
@@ -94,6 +95,7 @@ elements.get("game").width = 960;
 elements.get("game").height = 480;
 elements.get("game").getContext = () => createCanvasContext();
 const trackedEvents = [];
+const loadedScripts = [];
 
 function createRuntimeElements() {
   const runtimeElements = new Map();
@@ -109,6 +111,7 @@ function createRuntimeElements() {
 function createRuntime(scriptSource, options = {}) {
   const runtimeElements = createRuntimeElements();
   const trackedEvents = [];
+  const loadedScripts = [];
   const runtimeSandbox = {
     console,
     crypto: {
@@ -127,6 +130,12 @@ function createRuntime(scriptSource, options = {}) {
           height: 0,
           getContext: () => createCanvasContext()
         };
+      },
+      head: {
+        appendChild(element) {
+          loadedScripts.push(element);
+          return element;
+        }
       }
     },
     Math,
@@ -134,7 +143,8 @@ function createRuntime(scriptSource, options = {}) {
       now: () => 1000
     },
     requestAnimationFrame() {},
-    trackedEvents
+    trackedEvents,
+    loadedScripts
   };
 
   runtimeSandbox.window = options.window || {
@@ -148,6 +158,7 @@ function createRuntime(scriptSource, options = {}) {
   return {
     elements: runtimeElements,
     sandbox: runtimeSandbox,
+    loadedScripts,
     trackedEvents
   };
 }
@@ -170,6 +181,12 @@ const sandbox = {
         height: 0,
         getContext: () => createCanvasContext()
       };
+    },
+    head: {
+      appendChild(element) {
+        loadedScripts.push(element);
+        return element;
+      }
     }
   },
   Math,
@@ -177,18 +194,28 @@ const sandbox = {
     now: () => 1000
   },
   requestAnimationFrame() {},
-  trackedEvents
+  trackedEvents,
+  loadedScripts
+};
+
+sandbox.window = {
+  plausible(eventName, payload) {
+    trackedEvents.push({ eventName, payload });
+  }
 };
 
 const scriptWithProbe = scriptMatch[1].replace(
-  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  resetGame();\n  requestAnimationFrame(loop);",
+  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  initializeAnalyticsProvider();\n  resetGame();\n  requestAnimationFrame(loop);",
   [
     "  loadCharacterSprites();",
     "  loadStageBackgrounds();",
+    "  initializeAnalyticsProvider();",
     "  resetGame();",
     "  globalThis.__keitoRuntimeProbe = {",
     "    addExperience,",
     "    checkResult,",
+    "    getAnalyticsConfig: () => ANALYTICS_CONFIG,",
+    "    getLoadedScripts: () => loadedScripts,",
     "    getState: () => state,",
     "    getTrackedEvents: () => trackedEvents,",
     "    trackGameEvent",
@@ -234,9 +261,11 @@ assert.strictEqual(elements.get("spawnNeko").textContent, "まるねこ 50", "re
 assert.strictEqual(elements.get("spawnNeko").disabled, false, "restart should reset cooldown");
 assert.strictEqual(sandbox.__keitoRuntimeProbe.getState().experienceNoticeShown, false, "restart should reset experience notice state");
 assert.deepStrictEqual(
-  sandbox.__keitoRuntimeProbe.getTrackedEvents(),
-  [],
-  "analytics should not send events when disabled by default"
+  sandbox.__keitoRuntimeProbe
+    .getTrackedEvents()
+    .map((event) => event.eventName),
+  ["game_open", "first_summon"],
+  "enabled analytics should keep one game_open and one first_summon after restart"
 );
 
 sandbox.__keitoRuntimeProbe.addExperience(100, 480, 120);
@@ -282,14 +311,38 @@ assert.match(
   "lose message should remain available"
 );
 
-const enabledScript = scriptWithProbe.replace(
-  "enabled: false,\n    provider: \"noop\",",
-  "enabled: true,\n    provider: \"plausible\","
-);
 const {
   elements: enabledElements,
   sandbox: enabledSandbox
-} = createRuntime(enabledScript);
+} = createRuntime(scriptWithProbe);
+
+assert.deepStrictEqual(
+  JSON.parse(JSON.stringify(enabledSandbox.__keitoRuntimeProbe.getAnalyticsConfig())),
+  {
+    enabled: true,
+    provider: "plausible",
+    siteDomain: "emiko8628.github.io/KEITO_DAISENSO",
+    scriptSrc: "https://plausible.io/js/script.js",
+    eventEndpoint: "https://plausible.io/api/event"
+  },
+  "analytics config should use the confirmed Plausible provider values"
+);
+
+assert.strictEqual(
+  enabledSandbox.__keitoRuntimeProbe.getLoadedScripts().length,
+  1,
+  "analytics loader should append exactly one provider script"
+);
+assert.strictEqual(
+  enabledSandbox.__keitoRuntimeProbe.getLoadedScripts()[0].dataset.domain,
+  "emiko8628.github.io/KEITO_DAISENSO",
+  "analytics loader should use the confirmed target domain"
+);
+assert.strictEqual(
+  enabledSandbox.__keitoRuntimeProbe.getLoadedScripts()[0].src,
+  "https://plausible.io/js/script.js",
+  "analytics loader should use the confirmed script URL"
+);
 
 assert.deepStrictEqual(
   enabledSandbox.__keitoRuntimeProbe
@@ -347,7 +400,7 @@ assert.strictEqual(
 
 const {
   sandbox: propsSandbox
-} = createRuntime(enabledScript);
+} = createRuntime(scriptWithProbe);
 const beforeUnknownEventCount = propsSandbox.__keitoRuntimeProbe.getTrackedEvents().length;
 propsSandbox.__keitoRuntimeProbe.trackGameEvent("unknown_event", {
   stageId: "earth-wanwan-01"
@@ -381,7 +434,20 @@ assert.deepStrictEqual(
   "analytics should drop non-allowlisted props"
 );
 
-const { elements: blockedElements } = createRuntime(enabledScript, {
+const disabledScript = scriptWithProbe.replace(
+  "enabled: true,\n    provider: \"plausible\",",
+  "enabled: false,\n    provider: \"noop\","
+);
+const {
+  sandbox: disabledSandbox
+} = createRuntime(disabledScript);
+assert.deepStrictEqual(
+  disabledSandbox.__keitoRuntimeProbe.getTrackedEvents(),
+  [],
+  "disabled fallback should not send events when explicitly configured off"
+);
+
+const { elements: blockedElements } = createRuntime(scriptWithProbe, {
   window: {
     plausible() {
       throw new Error("analytics blocked");

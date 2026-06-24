@@ -2,6 +2,7 @@ const fs = require("fs");
 const assert = require("assert");
 
 const html = fs.readFileSync("game.html", "utf8");
+const readme = fs.readFileSync("README.md", "utf8");
 const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
 
 assert(scriptMatch, "game.html must include an inline script block");
@@ -266,14 +267,50 @@ contains(
 
 contains(
   script,
-  "enabled: false",
-  "analytics must be disabled by default"
+  "enabled: true",
+  "analytics provider must be enabled only in the provider enablement PR"
 );
 
 contains(
   script,
-  'provider: "noop"',
-  "analytics must use noop provider by default"
+  'provider: "google_analytics"',
+  "analytics provider must be Google Analytics"
+);
+
+contains(
+  script,
+  'measurementId: "G-930NR1L6KX"',
+  "Google Analytics measurement ID"
+);
+
+contains(
+  script,
+  'scriptSrc: "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"',
+  "Google tag script URL"
+);
+
+contains(
+  script,
+  "function trackGoogleAnalyticsEvent",
+  "Google Analytics event adapter"
+);
+
+contains(
+  script,
+  "send_page_view: false",
+  "Google Analytics automatic page_view should stay disabled"
+);
+
+contains(
+  html,
+  "Google Analyticsで利用状況を計測しています。ゲーム内の入力内容や個人情報は保存しません。",
+  "analytics-enabled footer copy"
+);
+
+contains(
+  readme,
+  "Google Analyticsを有効にする場合のみ、game_open / first_summon / stage_clear を送信します",
+  "README analytics disclosure"
 );
 
 contains(
@@ -321,6 +358,25 @@ contains(
 assert(
   !script.includes("localStorage") && !script.includes("sessionStorage"),
   "analytics must not add browser storage identifiers"
+);
+
+const allowedExternalUrls = [
+  "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"
+];
+const externalUrls = Array.from(new Set(
+  html.match(/https?:\/\/[^"'`\s<>)]+/g) || []
+)).sort();
+assert.deepStrictEqual(
+  externalUrls,
+  allowedExternalUrls,
+  "game.html must only allow the selected Google tag script"
+);
+
+const legacyAnalyticsProvider = "plaus" + "ible";
+assert(
+  !script.includes(legacyAnalyticsProvider) &&
+    !script.includes(legacyAnalyticsProvider[0].toUpperCase() + legacyAnalyticsProvider.slice(1)),
+  "legacy analytics adapter must be removed when Google Analytics is selected"
 );
 
 assert(

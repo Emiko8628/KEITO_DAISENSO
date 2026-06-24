@@ -177,8 +177,8 @@ function trackGameEvent(eventName, props = {}) {
     trackNoopEvent(eventName, safeProps);
     return;
   }
-  if (ANALYTICS_CONFIG.provider === "plausible") {
-    trackPlausibleEvent(eventName, safeProps);
+  if (ANALYTICS_CONFIG.provider === "google_analytics") {
+    trackGoogleAnalyticsEvent(eventName, safeProps);
     return;
   }
   trackNoopEvent(eventName, safeProps);
@@ -194,10 +194,10 @@ function sanitizeAnalyticsProps(eventName, props) {
   }, {});
 }
 
-function trackPlausibleEvent(eventName, props) {
+function trackGoogleAnalyticsEvent(eventName, props) {
   try {
-    if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    window.plausible(eventName, { props });
+    if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+    window.gtag("event", eventName, props);
   } catch (error) {
     trackNoopEvent(eventName, props);
   }
@@ -300,8 +300,9 @@ If the implementation uses a window-level fake sink, expose:
 
 ```js
 window: {
-  plausible(eventName, payload) {
-    trackedEvents.push({ eventName, payload });
+  dataLayer: trackedEvents,
+  gtag(...args) {
+    trackedEvents.push(args);
   }
 }
 ```
@@ -325,17 +326,18 @@ Build a second `scriptWithAnalyticsEnabled` in `scripts/verify-game-runtime.js` 
 ```js
 const enabledScript = scriptWithProbe.replace(
   "enabled: false,\n  provider: \"noop\",",
-  "enabled: true,\n  provider: \"plausible\","
+  "enabled: true,\n  provider: \"google_analytics\","
 );
 ```
 
-Run the enabled script in a fresh sandbox with a fake `window.plausible`. Assert:
+Run the enabled script in a fresh sandbox with a fake `window.gtag`. Assert:
 
 ```js
 assert.deepStrictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .map((event) => event.eventName),
+    .filter((event) => event[0] === "event")
+    .map((event) => event[1]),
   ["game_open"],
   "enabled analytics should send one game_open after page start"
 );
@@ -344,7 +346,8 @@ enabledElements.get("restart").click();
 assert.deepStrictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .map((event) => event.eventName),
+    .filter((event) => event[0] === "event")
+    .map((event) => event[1]),
   ["game_open"],
   "restart should not duplicate game_open"
 );
@@ -355,7 +358,7 @@ enabledElements.get("spawnNeko").click();
 assert.deepStrictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .filter((event) => event.eventName === "first_summon").length,
+    .filter((event) => event[0] === "event" && event[1] === "first_summon").length,
   1,
   "first_summon should be sent once per page session"
 );
@@ -366,7 +369,7 @@ enabledSandbox.__keitoRuntimeProbe.checkResult();
 assert.deepStrictEqual(
   enabledSandbox.__keitoRuntimeProbe
     .getTrackedEvents()
-    .filter((event) => event.eventName === "stage_clear").length,
+    .filter((event) => event[0] === "event" && event[1] === "stage_clear").length,
   1,
   "stage_clear should be sent once per page session"
 );
@@ -374,11 +377,12 @@ assert.deepStrictEqual(
 
 - [ ] **Step 8: Add provider failure assertion**
 
-Run another enabled sandbox where `window.plausible` throws:
+Run another enabled sandbox where `window.gtag` throws:
 
 ```js
 window: {
-  plausible() {
+  dataLayer: [],
+  gtag() {
     throw new Error("analytics blocked");
   }
 }
@@ -414,29 +418,30 @@ Expected: PASS with disabled mode, enabled mode, restart dedupe, and provider fa
 Required values:
 
 ```text
-provider = plausible
-siteDomain = emiko8628.github.io/KEITO_DAISENSO or the chosen custom domain
-scriptSrc = the provider-approved script URL
-providerDashboardGoals = game_open, first_summon, stage_clear
+provider = google_analytics
+measurementId = G-930NR1L6KX
+scriptSrc = https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX
+providerEvents = game_open, first_summon, stage_clear
 ```
 
-For Plausible, create matching custom event goals for `game_open`, `first_summon`, and `stage_clear` before expecting the dashboard to show conversion counts.
+For Google Analytics 4, confirm the web data stream is created for `https://emiko8628.github.io/KEITO_DAISENSO/` and that enhanced measurement is disabled unless a later privacy review explicitly enables it.
+The Google tag config should set `{ send_page_view: false }` so the game sends only the explicit `game_open`, `first_summon`, and `stage_clear` events from `trackGameEvent`.
 
 - [ ] **Step 2: Update public copy in the same PR**
 
 Change footer text in `game.html` to:
 
 ```html
-<p class="note">非公式ファン制作｜匿名の利用状況だけを取得しています。ゲーム内の入力内容や個人情報は保存しません。</p>
+<p class="note">非公式ファン制作｜Google Analyticsで利用状況を計測しています。ゲーム内の入力内容や個人情報は保存しません。</p>
 ```
 
 Change README safety wording to:
 
 ```md
 - 静的HTMLで動作します
-- 匿名の利用状況計測を有効にする場合のみ、設定した解析サービスへ game_open / first_summon / stage_clear を送信します
+- Google Analyticsを有効にする場合のみ、game_open / first_summon / stage_clear を送信します
 - ゲーム内の名前、メール、入力内容、保存データは扱いません
-- 解析サービス側の処理は、選んだサービスのプライバシーポリシーに従います
+- Google Analytics側の処理は、Googleのプライバシーポリシーとデータ処理規約に従います
 ```
 
 - [ ] **Step 3: Add script/config only after provider is ready**
@@ -446,13 +451,14 @@ Set:
 ```js
 const ANALYTICS_CONFIG = {
   enabled: true,
-  provider: "plausible",
-  siteDomain: "CONFIRMED_DOMAIN",
-  scriptSrc: "CONFIRMED_SCRIPT_URL"
+  provider: "google_analytics",
+  measurementId: "G-930NR1L6KX",
+  scriptSrc: "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"
 };
 ```
 
-If the provider requires a browser script, add exactly one provider-approved `<script>` tag or a tiny loader guarded by `ANALYTICS_CONFIG`. Do not add a tag manager. Do not add arbitrary remote scripts. If a Content Security Policy is introduced later, update it to allow only the selected analytics script and endpoint.
+Add a tiny loader guarded by `ANALYTICS_CONFIG` that appends exactly one Google tag script with the configured `measurementId` and `scriptSrc`. Do not add Google Tag Manager. Do not add arbitrary remote scripts. If a Content Security Policy is introduced later, update it to allow only `https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX` and the Google Analytics endpoints used by the Google tag runtime.
+Configure Google Analytics with `{ send_page_view: false }`; `game_open` remains the explicit page/game-open event.
 
 - [ ] **Step 4: Update external communication scan**
 
@@ -475,7 +481,7 @@ http://127.0.0.1:8765/game.html
 Verify:
 
 - page loads
-- footer discloses anonymous analytics
+- footer discloses Google Analytics measurement
 - first summon works
 - stage clear still works
 - console has no relevant warnings or errors
@@ -536,7 +542,7 @@ After merge, confirm GitHub Pages:
 ```bash
 COMMIT_ID="$(git rev-parse --short HEAD)"
 curl -sI "https://emiko8628.github.io/KEITO_DAISENSO/game.html?v=${COMMIT_ID}"
-curl -sL "https://emiko8628.github.io/KEITO_DAISENSO/game.html?v=${COMMIT_ID}" | rg -n "game_open|first_summon|stage_clear|匿名の利用状況"
+curl -sL "https://emiko8628.github.io/KEITO_DAISENSO/game.html?v=${COMMIT_ID}" | rg -n "game_open|first_summon|stage_clear|Google Analytics|G-930NR1L6KX"
 ```
 
 Expected: HTTP 200 and updated public code/copy reflected.
@@ -553,10 +559,10 @@ Spec coverage:
 
 Placeholder scan:
 
-- The only configurable values are deliberately named `CONFIRMED_DOMAIN` and `CONFIRMED_SCRIPT_URL` in the provider-enabling task because live provider details must not be guessed.
+- Provider enablement values are concrete for this PR: Google Analytics, `G-930NR1L6KX`, `https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX`, and `game_open` / `first_summon` / `stage_clear`.
 
 Type consistency:
 
 - Event names are centralized in `ANALYTICS_EVENTS`.
 - Game code calls `trackGameEvent`, `trackFirstSummon`, and `trackStageClear`.
-- Provider code is limited to `trackPlausibleEvent`.
+- Provider code is limited to `trackGoogleAnalyticsEvent`.

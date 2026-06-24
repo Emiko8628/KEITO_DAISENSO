@@ -277,7 +277,7 @@ assert.strictEqual(elements.get("money").textContent, "180");
 assert.strictEqual(elements.get("viewerCount").textContent, "2");
 assert.strictEqual(
   sandbox.__keitoRuntimeProbe.getAudienceRequests().at(-1).url,
-  "https://keito-daisenso-live-audience.emiko8628.workers.dev/heartbeat",
+  "https://keito-daisenso-live-audience.futunex1115.workers.dev/heartbeat",
   "live audience heartbeat should use the configured Worker endpoint"
 );
 assert.deepStrictEqual(

@@ -363,7 +363,7 @@ assert(
 );
 
 const allowedExternalUrls = [
-  "https://keito-daisenso-live-audience.emiko8628.workers.dev/heartbeat",
+  "https://keito-daisenso-live-audience.futunex1115.workers.dev/heartbeat",
   "https://www.googletagmanager.com/gtag/js?id=G-930NR1L6KX"
 ];
 const externalUrls = Array.from(new Set(
@@ -459,7 +459,7 @@ contains(
 
 contains(
   script,
-  "endpoint: \"https://keito-daisenso-live-audience.emiko8628.workers.dev/heartbeat\"",
+  "endpoint: \"https://keito-daisenso-live-audience.futunex1115.workers.dev/heartbeat\"",
   "live audience endpoint"
 );
 

@@ -312,8 +312,6 @@ button:disabled {
       <div class="hud-board">
         <div class="money-line"><strong id="money">180</strong><span>円</span></div>
         <div class="compact-stats">
-          <span>HOME <strong id="allyBase">100</strong></span>
-          <span>BOSS <strong id="enemyBase">70</strong></span>
           <span>撃破 <strong id="defeats">0</strong></span>
         </div>
         <div class="audience-line" aria-label="現在の参戦人数">
@@ -347,8 +345,6 @@ button:disabled {
     stageChapter: document.getElementById("stageChapter"),
     stageName: document.getElementById("stageName"),
     money: document.getElementById("money"),
-    allyBase: document.getElementById("allyBase"),
-    enemyBase: document.getElementById("enemyBase"),
     defeats: document.getElementById("defeats"),
     viewerCount: document.getElementById("viewerCount"),
     experience: document.getElementById("experience"),
@@ -960,12 +956,10 @@ button:disabled {
       const previousHp = state.enemyBaseHp;
       state.enemyBaseHp = Math.max(0, state.enemyBaseHp - actor.attack);
       const damage = previousHp - state.enemyBaseHp;
-      addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ffd166");
       addEffect("baseHit", baseX, GROUND_Y - 78, "#ffd166", "ally");
       addExperience(Math.ceil(damage * currentStage().baseHitExperienceRate), baseX, GROUND_Y - 104);
     } else {
       state.allyBaseHp = Math.max(0, state.allyBaseHp - actor.attack);
-      addFloatingText(baseX, GROUND_Y - 70, `-${actor.attack}`, "#ff8787");
       addEffect("baseHit", baseX, GROUND_Y - 78, "#ff8787", "enemy");
     }
     actor.cooldown = actor.cooldownMax;
@@ -984,7 +978,6 @@ button:disabled {
         actor.cooldown = actor.cooldownMax;
         addEffect(actor.team === "ally" ? "slash" : "impact", target.x, target.y - target.height * 0.5, actor.team === "ally" ? "#ffd166" : "#ff8787", actor.team);
         addEffect("spark", target.x, target.y - target.height * 0.55, actor.team === "ally" ? "#66d9ef" : "#ffb3b3", actor.team);
-        addFloatingText(target.x, target.y - target.height, `-${actor.attack}`, actor.team === "ally" ? "#ffd166" : "#ff8787");
       }
       return;
     }
@@ -1125,8 +1118,6 @@ button:disabled {
     ui.stageChapter.textContent = stage.chapter;
     ui.stageName.textContent = stage.name;
     ui.money.textContent = Math.floor(state.money);
-    ui.allyBase.textContent = Math.ceil(state.allyBaseHp);
-    ui.enemyBase.textContent = Math.ceil(state.enemyBaseHp);
     ui.defeats.textContent = state.defeats;
     ui.experience.textContent = `${Math.floor(state.experience)} / ${state.targetExperience}`;
     ui.message.innerHTML = state.gameOver
@@ -1212,7 +1203,7 @@ button:disabled {
     const stage = currentStage();
     const maxHp = isAlly ? stage.allyBaseHp : stage.enemyBaseHp;
     drawBaseStructure(x, hp, team);
-    drawHpBar(x - 42, GROUND_Y - 124, 84, 9, hp, maxHp);
+    drawBaseHpText(x, hp, maxHp);
   }
 
   function drawBaseStructure(x, hp, team) {
@@ -1275,10 +1266,20 @@ button:disabled {
 
     ctx.fillStyle = cap;
     ctx.fillRect(x - 44, GROUND_Y - 104, 88, 26);
-    ctx.fillStyle = "#f6f7fb";
-    ctx.font = "700 13px system-ui, sans-serif";
+  }
+
+  function drawBaseHpText(x, hp, maxHp) {
+    const current = Math.max(0, Math.ceil(hp));
+    const maximum = Math.ceil(maxHp);
+    const text = `${current} / ${maximum}`;
+
+    ctx.font = "800 15px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(isAlly ? "HOME" : "BOSS", x, GROUND_Y - 86);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(13, 17, 24, 0.78)";
+    ctx.strokeText(text, x, GROUND_Y - 124);
+    ctx.fillStyle = "#f6f7fb";
+    ctx.fillText(text, x, GROUND_Y - 124);
   }
 
   function drawFighter(fighter) {
@@ -1291,7 +1292,6 @@ button:disabled {
     drawCharacterSprite(fighter, pulse);
 
     ctx.restore();
-    drawHpBar(fighter.x - 18, fighter.y - fighter.height - 14, 36, 5, fighter.hp, fighter.maxHp);
   }
 
   function drawFighterShadow(fighter) {
@@ -1353,13 +1353,6 @@ button:disabled {
     ctx.fillRect(4, -fighter.height / 2 - 6, 6, 6);
     ctx.fillStyle = "#ffe3e3";
     ctx.fillRect(-9, -fighter.height / 2 + 9, 18, 4);
-  }
-
-  function drawHpBar(x, y, width, height, hp, maxHp) {
-    ctx.fillStyle = "#111827";
-    ctx.fillRect(x, y, width, height);
-    ctx.fillStyle = hp / maxHp > 0.38 ? "#8ce99a" : "#ff8787";
-    ctx.fillRect(x, y, width * Math.max(0, hp / maxHp), height);
   }
 
   function drawFloatingTexts() {

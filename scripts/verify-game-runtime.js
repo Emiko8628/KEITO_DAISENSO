@@ -271,7 +271,8 @@ const scriptWithProbe = scriptMatch[1].replace(
 assert(
   scriptMatch[1].includes("function drawBaseImage") &&
     scriptMatch[1].includes("if (drawBaseImage(x, team)) return;") &&
-    scriptMatch[1].includes("function drawCanvasBaseStructure"),
+    scriptMatch[1].includes("function drawCanvasBaseStructure") &&
+    scriptMatch[1].includes("const BASE_IMAGE_GROUND_Y = GROUND_Y + 34"),
   "base rendering should prefer image assets while keeping a canvas fallback"
 );
 

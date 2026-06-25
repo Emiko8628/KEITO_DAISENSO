@@ -363,6 +363,7 @@ button:disabled {
   const HEIGHT = canvas.height;
   const GROUND_Y = 342;
   const FIGHTER_GROUND_Y = GROUND_Y + 24;
+  const BASE_IMAGE_GROUND_Y = GROUND_Y + 34;
   const ALLY_BASE_X = WIDTH - 72;
   const ENEMY_BASE_X = 72;
   const ANALYTICS_CONFIG = {
@@ -1229,12 +1230,8 @@ button:disabled {
     const drawHeight = 148;
     const drawWidth = drawHeight * (imageWidth / imageHeight);
     const dx = x - drawWidth / 2;
-    const dy = GROUND_Y + 24 - drawHeight;
+    const dy = BASE_IMAGE_GROUND_Y - drawHeight;
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.34)";
-    ctx.beginPath();
-    ctx.ellipse(x, GROUND_Y + 25, 48, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
     ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
     return true;
   }

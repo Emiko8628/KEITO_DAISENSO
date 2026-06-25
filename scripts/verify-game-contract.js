@@ -56,6 +56,7 @@ const allyBaseX = numberConstant("ALLY_BASE_X");
 const enemyBaseX = numberConstant("ENEMY_BASE_X");
 const attackBaseSection = functionSection("attackBase", "updateFighter");
 const checkResultSection = functionSection("checkResult", "updateUI");
+const drawBaseImageSection = functionSection("drawBaseImage", "drawCanvasBaseStructure");
 
 assert(
   allyBaseX > enemyBaseX,
@@ -279,6 +280,24 @@ contains(
   script,
   "function drawBaseImage",
   "base image renderer"
+);
+
+contains(
+  script,
+  "const BASE_IMAGE_GROUND_Y = GROUND_Y + 34",
+  "image bases should use an explicit ground contact line"
+);
+
+contains(
+  drawBaseImageSection,
+  "const dy = BASE_IMAGE_GROUND_Y - drawHeight;",
+  "image bases should sit directly on the ground contact line"
+);
+
+assert(
+  !drawBaseImageSection.includes("ctx.ellipse") &&
+    !drawBaseImageSection.includes("rgba(0, 0, 0"),
+  "image bases should not draw a separate fake shadow"
 );
 
 contains(

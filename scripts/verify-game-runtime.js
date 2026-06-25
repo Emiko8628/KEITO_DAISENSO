@@ -244,10 +244,11 @@ sandbox.window = {
 };
 
 const scriptWithProbe = scriptMatch[1].replace(
-  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  initializeAnalyticsProvider();\n  resetGame();\n  initializeLiveAudience();\n  requestAnimationFrame(loop);",
+  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  loadBaseImages();\n  initializeAnalyticsProvider();\n  resetGame();\n  initializeLiveAudience();\n  requestAnimationFrame(loop);",
   [
     "  loadCharacterSprites();",
     "  loadStageBackgrounds();",
+    "  loadBaseImages();",
     "  initializeAnalyticsProvider();",
     "  resetGame();",
     "  initializeLiveAudience();",
@@ -265,6 +266,13 @@ const scriptWithProbe = scriptMatch[1].replace(
     "  };",
     "  requestAnimationFrame(loop);"
   ].join("\n")
+);
+
+assert(
+  scriptMatch[1].includes("function drawBaseImage") &&
+    scriptMatch[1].includes("if (drawBaseImage(x, team)) return;") &&
+    scriptMatch[1].includes("function drawCanvasBaseStructure"),
+  "base rendering should prefer image assets while keeping a canvas fallback"
 );
 
 async function main() {

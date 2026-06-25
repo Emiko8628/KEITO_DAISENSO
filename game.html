@@ -402,6 +402,12 @@ button:disabled {
     intervalId: null
   };
 
+  const ALLY_BASE_SPRITE = "assets/base-ally-blue-castle.png";
+  const FUTURE_ENEMY_BASE_SPRITES = Object.freeze([
+    "assets/base-enemy-stage-2-green-castle.png",
+    "assets/base-enemy-stage-3-red-black-castle.png"
+  ]);
+
   const STAGES = [
     {
       id: "earth-wanwan-01",
@@ -413,6 +419,7 @@ button:disabled {
       targetExperience: 100,
       clearBonus: 120,
       background: "assets/stage-earth-wanwan-background.png",
+      enemyBaseSprite: "assets/base-enemy-stage-1-gold-castle.png",
       enemyDefeatExperience: {
         pyoko: 18,
         nyoro: 30,
@@ -524,6 +531,7 @@ button:disabled {
   let lastTime = performance.now();
   const spriteCache = new Map();
   const backgroundCache = new Map();
+  const baseImageCache = new Map();
 
   function currentStage() {
     const index = state && typeof state.stageIndex === "number" ? state.stageIndex : 0;
@@ -808,6 +816,26 @@ button:disabled {
         backgroundCache.set(stage.background, null);
       };
       image.src = stage.background;
+    });
+  }
+
+  function loadBaseImages() {
+    if (typeof Image === "undefined") return;
+    const baseSprites = new Set([
+      ALLY_BASE_SPRITE,
+      ...FUTURE_ENEMY_BASE_SPRITES,
+      ...STAGES.map((stage) => stage.enemyBaseSprite).filter(Boolean)
+    ]);
+
+    baseSprites.forEach((sprite) => {
+      const image = new Image();
+      image.onload = () => {
+        baseImageCache.set(sprite, image);
+      };
+      image.onerror = () => {
+        baseImageCache.set(sprite, null);
+      };
+      image.src = sprite;
     });
   }
 
@@ -1187,6 +1215,31 @@ button:disabled {
   }
 
   function drawBaseStructure(x, hp, team) {
+    if (drawBaseImage(x, team)) return;
+    drawCanvasBaseStructure(x, hp, team);
+  }
+
+  function drawBaseImage(x, team) {
+    const sprite = team === "ally" ? ALLY_BASE_SPRITE : currentStage().enemyBaseSprite;
+    const image = sprite ? baseImageCache.get(sprite) : null;
+    if (!image) return false;
+
+    const imageWidth = image.naturalWidth || image.width;
+    const imageHeight = image.naturalHeight || image.height;
+    const drawHeight = 148;
+    const drawWidth = drawHeight * (imageWidth / imageHeight);
+    const dx = x - drawWidth / 2;
+    const dy = GROUND_Y + 24 - drawHeight;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.34)";
+    ctx.beginPath();
+    ctx.ellipse(x, GROUND_Y + 25, 48, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
+    return true;
+  }
+
+  function drawCanvasBaseStructure(x, hp, team) {
     const isAlly = team === "ally";
     const body = isAlly ? "#2b8a9f" : "#8f3d4f";
     const cap = isAlly ? "#66d9ef" : "#ff6b6b";
@@ -1444,6 +1497,7 @@ button:disabled {
 
   loadCharacterSprites();
   loadStageBackgrounds();
+  loadBaseImages();
   initializeAnalyticsProvider();
   resetGame();
   initializeLiveAudience();

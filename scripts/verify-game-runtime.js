@@ -347,16 +347,16 @@ assert.match(
 );
 const noticeCount = sandbox.__keitoRuntimeProbe
   .getState()
-  .floatingTexts
-  .filter((text) => text.text === "経験値がたまったよ！").length;
+  .experienceNoticeShown;
 sandbox.__keitoRuntimeProbe.addExperience(100, 480, 120);
 assert.strictEqual(
-  sandbox.__keitoRuntimeProbe
-    .getState()
-    .floatingTexts
-    .filter((text) => text.text === "経験値がたまったよ！").length,
+  sandbox.__keitoRuntimeProbe.getState().experienceNoticeShown,
   noticeCount,
-  "experience notice should not repeat after the target is already reached"
+  "experience notice state should not reset after the target is already reached"
+);
+assert(
+  !("floatingTexts" in sandbox.__keitoRuntimeProbe.getState()),
+  "combat progress numbers should not be tracked for floating display"
 );
 
 sandbox.__keitoRuntimeProbe.getState().enemyBaseHp = 0;

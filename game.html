@@ -685,7 +685,6 @@ button:disabled {
       defeats: 0,
       units: [],
       enemies: [],
-      floatingTexts: [],
       effects: [],
       experienceNoticeShown: false,
       summonCooldowns: {
@@ -987,10 +986,6 @@ button:disabled {
     actor.x += actor.team === "ally" ? -actor.speed * dt : actor.speed * dt;
   }
 
-  function addFloatingText(x, y, text, color) {
-    state.floatingTexts.push({ x, y, text, color, life: 52 });
-  }
-
   function addEffect(type, x, y, color, team) {
     const maxLife = type === "clearBurst" ? 90 : 28;
     state.effects.push({
@@ -1010,14 +1005,12 @@ button:disabled {
     const gained = Math.min(amount, state.targetExperience - state.experience);
     if (gained <= 0) return;
     state.experience += gained;
-    addFloatingText(x, y, `EXP +${gained}`, "#ffd166");
     maybeShowExperienceNotice(x, y - 24);
   }
 
   function maybeShowExperienceNotice(x, y) {
     if (state.experienceNoticeShown || state.experience < state.targetExperience || state.gameOver) return;
     state.experienceNoticeShown = true;
-    addFloatingText(x, y, "経験値がたまったよ！", "#ffd166");
     addEffect("spark", x, y + 18, "#ffd166", "ally");
     state.message = "経験値がたまったよ！敵拠点をこわせばクリアだよ。";
   }
@@ -1029,7 +1022,6 @@ button:disabled {
       const experience = stage.enemyDefeatExperience[enemy.kind] || 0;
       state.money += enemy.reward;
       state.defeats += 1;
-      addFloatingText(enemy.x, enemy.y - 48, `+${enemy.reward}`, "#8ce99a");
       addExperience(experience, enemy.x, enemy.y - 72);
       addEffect("impact", enemy.x, enemy.y - enemy.height * 0.55, "#ffd166", "ally");
       return false;
@@ -1042,7 +1034,6 @@ button:disabled {
     const dt = Math.min(deltaMs / 16.67, 3);
     if (state.gameOver) {
       updateEffects(dt);
-      updateFloatingTexts(dt);
       return;
     }
 
@@ -1066,7 +1057,6 @@ button:disabled {
     [...state.units, ...state.enemies].forEach((fighter) => updateFighter(fighter, dt));
     removeDefeated();
     updateEffects(dt);
-    updateFloatingTexts(dt);
     checkResult();
     updateUI();
   }
@@ -1083,14 +1073,6 @@ button:disabled {
       effect.y -= effect.type === "clearBurst" ? 0.03 * dt : 0;
     });
     state.effects = state.effects.filter((effect) => effect.life > 0);
-  }
-
-  function updateFloatingTexts(dt) {
-    state.floatingTexts.forEach((text) => {
-      text.y -= 0.42 * dt;
-      text.life -= dt;
-    });
-    state.floatingTexts = state.floatingTexts.filter((text) => text.life > 0);
   }
 
   function checkResult() {
@@ -1355,17 +1337,6 @@ button:disabled {
     ctx.fillRect(-9, -fighter.height / 2 + 9, 18, 4);
   }
 
-  function drawFloatingTexts() {
-    ctx.font = "700 15px system-ui, sans-serif";
-    ctx.textAlign = "center";
-    for (const text of state.floatingTexts) {
-      ctx.globalAlpha = Math.min(1, text.life / 18);
-      ctx.fillStyle = text.color;
-      ctx.fillText(text.text, text.x, text.y);
-    }
-    ctx.globalAlpha = 1;
-  }
-
   function drawEffects() {
     for (const effect of state.effects) {
       const progress = 1 - effect.life / effect.maxLife;
@@ -1467,7 +1438,6 @@ button:disabled {
       .sort((a, b) => a.x - b.x)
       .forEach(drawFighter);
     drawEffects();
-    drawFloatingTexts();
     drawStageIntro();
     drawResultBanner();
   }

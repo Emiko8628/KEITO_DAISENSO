@@ -55,7 +55,7 @@ function functionSection(name, nextName) {
 const allyBaseX = numberConstant("ALLY_BASE_X");
 const enemyBaseX = numberConstant("ENEMY_BASE_X");
 const attackBaseSection = functionSection("attackBase", "updateFighter");
-const updateFighterSection = functionSection("updateFighter", "addFloatingText");
+const updateFighterSection = functionSection("updateFighter", "addEffect");
 const checkResultSection = functionSection("checkResult", "updateUI");
 const updateUISection = functionSection("updateUI", "drawBackground");
 const drawBaseSection = functionSection("drawBase", "drawBaseStructure");
@@ -545,16 +545,16 @@ assert(
   "attack damage numbers should not be rendered as floating text"
 );
 
-contains(
-  script,
-  "addFloatingText(x, y, `EXP +${gained}`,",
-  "EXP floating text should remain visible"
+assert(
+  !script.includes("addFloatingText") &&
+    !script.includes("floatingTexts") &&
+    !script.includes("drawFloatingTexts"),
+  "combat progress numbers should stay internal and not render floating text"
 );
 
-contains(
-  script,
-  "addFloatingText(enemy.x, enemy.y - 48, `+${enemy.reward}`,",
-  "reward floating text should remain visible"
+assert(
+  !script.includes("EXP +${gained}") && !script.includes("`+${enemy.reward}`"),
+  "EXP and reward gains should not appear as floating battle numbers"
 );
 
 contains(

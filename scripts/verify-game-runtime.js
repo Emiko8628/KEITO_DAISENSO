@@ -66,6 +66,7 @@ function createCanvasContext() {
     roundRect() {},
     save() {},
     stroke() {},
+    strokeText() {},
     translate() {}
   };
 }
@@ -76,8 +77,6 @@ const ids = [
   "stageChapter",
   "stageName",
   "money",
-  "allyBase",
-  "enemyBase",
   "defeats",
   "viewerCount",
   "experience",

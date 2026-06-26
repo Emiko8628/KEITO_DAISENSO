@@ -55,8 +55,13 @@ function functionSection(name, nextName) {
 const allyBaseX = numberConstant("ALLY_BASE_X");
 const enemyBaseX = numberConstant("ENEMY_BASE_X");
 const attackBaseSection = functionSection("attackBase", "updateFighter");
+const updateFighterSection = functionSection("updateFighter", "addFloatingText");
 const checkResultSection = functionSection("checkResult", "updateUI");
+const updateUISection = functionSection("updateUI", "drawBackground");
+const drawBaseSection = functionSection("drawBase", "drawBaseStructure");
 const drawBaseImageSection = functionSection("drawBaseImage", "drawCanvasBaseStructure");
+const drawCanvasBaseStructureSection = functionSection("drawCanvasBaseStructure", "drawFighter");
+const drawFighterSection = functionSection("drawFighter", "drawFighterShadow");
 
 assert(
   allyBaseX > enemyBaseX,
@@ -314,6 +319,38 @@ contains(
 
 contains(
   script,
+  "function drawBaseHpText",
+  "base HP should be rendered as numeric text above castles"
+);
+
+contains(
+  drawBaseSection,
+  "drawBaseHpText(x, hp, maxHp);",
+  "base drawing should use numeric current/max HP text"
+);
+
+assert(
+  !drawBaseSection.includes("drawHpBar"),
+  "base drawing should not render a gauge bar"
+);
+
+assert(
+  !drawFighterSection.includes("drawHpBar"),
+  "fighters should keep internal HP without rendering overhead HP bars"
+);
+
+assert(
+  !script.includes("function drawHpBar"),
+  "battle canvas should not include the old HP gauge renderer"
+);
+
+assert(
+  !drawCanvasBaseStructureSection.includes('fillText(isAlly ? "HOME" : "BOSS"'),
+  "canvas fallback bases should not show HOME/BOSS labels"
+);
+
+contains(
+  script,
   'summonCooldownMs: 1400',
   "まるねこ summon cooldown"
 );
@@ -502,6 +539,24 @@ assert(
   "destroying the enemy base must not force-fill remaining experience"
 );
 
+assert(
+  !attackBaseSection.includes("`-${actor.attack}`") &&
+    !updateFighterSection.includes("`-${actor.attack}`"),
+  "attack damage numbers should not be rendered as floating text"
+);
+
+contains(
+  script,
+  "addFloatingText(x, y, `EXP +${gained}`,",
+  "EXP floating text should remain visible"
+);
+
+contains(
+  script,
+  "addFloatingText(enemy.x, enemy.y - 48, `+${enemy.reward}`,",
+  "reward floating text should remain visible"
+);
+
 contains(
   html,
   'id="experience"',
@@ -512,6 +567,19 @@ contains(
   html,
   'class="battle-hud"',
   "in-game battle HUD"
+);
+
+assert(
+  !html.includes('id="allyBase"') &&
+    !html.includes('id="enemyBase"') &&
+    !html.includes(">HOME ") &&
+    !html.includes(">BOSS "),
+  "top HUD should not show HOME/BOSS base labels or duplicate base HP"
+);
+
+assert(
+  !updateUISection.includes("allyBase") && !updateUISection.includes("enemyBase"),
+  "top HUD updates should not duplicate base HP"
 );
 
 contains(

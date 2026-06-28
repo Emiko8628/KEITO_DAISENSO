@@ -271,6 +271,144 @@ contains(
 
 contains(
   script,
+  "const STAGE_MAP = Object.freeze",
+  "stage map navigation source of truth"
+);
+
+contains(
+  script,
+  'id: "earth-wanwan-01"',
+  "stage map first node id"
+);
+
+contains(
+  script,
+  'status: "playable"',
+  "stage map playable status"
+);
+
+contains(
+  script,
+  "stageIndex: 0",
+  "stage map playable node should point to the first real stage"
+);
+
+contains(
+  script,
+  'id: "saitama-preview-01"',
+  "stage map second preview node id"
+);
+
+contains(
+  script,
+  'chapter: "埼玉編"',
+  "stage map second preview chapter"
+);
+
+contains(
+  script,
+  'id: "tokyo-preview-01"',
+  "stage map third preview node id"
+);
+
+contains(
+  script,
+  'chapter: "東京編"',
+  "stage map third preview chapter"
+);
+
+contains(
+  script,
+  'status: "locked"',
+  "stage map locked preview status"
+);
+
+contains(
+  html,
+  'id="stageMap"',
+  "stage map view"
+);
+
+contains(
+  html,
+  'id="battleView"',
+  "battle view boundary"
+);
+
+contains(
+  html,
+  'id="startStage0"',
+  "playable first stage start control"
+);
+
+contains(
+  html,
+  'id="lockedStage1"',
+  "locked second stage preview control"
+);
+
+contains(
+  html,
+  'id="lockedStage2"',
+  "locked third stage preview control"
+);
+
+contains(
+  html,
+  'data-stage-map-action="start"',
+  "stage map start action marker"
+);
+
+contains(
+  html,
+  'data-stage-map-action="locked"',
+  "stage map locked action marker"
+);
+
+contains(
+  html,
+  "準備中",
+  "locked stage preview copy"
+);
+
+contains(
+  script,
+  "function createInitialState",
+  "selected stage initial-state boundary"
+);
+
+contains(
+  script,
+  "function startStage",
+  "stage map start boundary"
+);
+
+contains(
+  script,
+  "function selectStageMapNode",
+  "stage map selection boundary"
+);
+
+contains(
+  script,
+  "function renderStageMap",
+  "stage map rendering boundary"
+);
+
+contains(
+  script,
+  "function showStageMap",
+  "stage map visibility boundary"
+);
+
+contains(
+  script,
+  "function showBattleView",
+  "battle view visibility boundary"
+);
+
+contains(
+  script,
   "const baseImageCache = new Map",
   "base image cache"
 );
@@ -476,8 +614,8 @@ contains(
 );
 
 assert(
-  !script.includes("localStorage") && !script.includes("sessionStorage"),
-  "analytics must not add browser storage identifiers"
+  !script.includes("localStorage") && !script.includes("sessionStorage") && !script.includes("document.cookie"),
+  "game must not add browser storage identifiers"
 );
 
 const allowedExternalUrls = [

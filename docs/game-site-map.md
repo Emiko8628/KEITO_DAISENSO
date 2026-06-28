@@ -52,6 +52,7 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 1. **Stage map and stage selection design**
    - Add a visible path from the current first stage toward future stages.
    - Keep the first stage short, readable, and safe for quick play.
+   - Design spec: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md)
 
 2. **Game data extraction**
    - Move stage, unit, enemy, and asset definitions out of the large inline script only when a concrete next feature needs it.

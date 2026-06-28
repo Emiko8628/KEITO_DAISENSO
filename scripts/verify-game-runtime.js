@@ -22,6 +22,12 @@ function createElement(id) {
     addEventListener(type, callback) {
       this.listeners[type] = callback;
     },
+    setAttribute(name, value) {
+      this[name] = String(value);
+    },
+    getAttribute(name) {
+      return this[name];
+    },
     click() {
       if (this.listeners.click) this.listeners.click();
     }
@@ -73,6 +79,12 @@ function createCanvasContext() {
 
 const elements = new Map();
 const ids = [
+  "stageMap",
+  "battleView",
+  "stageMapStatus",
+  "startStage0",
+  "lockedStage1",
+  "lockedStage2",
   "game",
   "stageChapter",
   "stageName",
@@ -243,17 +255,20 @@ sandbox.window = {
 };
 
 const scriptWithProbe = scriptMatch[1].replace(
-  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  loadBaseImages();\n  initializeAnalyticsProvider();\n  resetGame();\n  initializeLiveAudience();\n  requestAnimationFrame(loop);",
+  "  loadCharacterSprites();\n  loadStageBackgrounds();\n  loadBaseImages();\n  initializeAnalyticsProvider();\n  initializeGame();\n  initializeLiveAudience();\n  requestAnimationFrame(loop);",
   [
     "  loadCharacterSprites();",
     "  loadStageBackgrounds();",
     "  loadBaseImages();",
     "  initializeAnalyticsProvider();",
-    "  resetGame();",
+    "  initializeGame();",
     "  initializeLiveAudience();",
     "  globalThis.__keitoRuntimeProbe = {",
     "    addExperience,",
     "    checkResult,",
+    "    getStageMap: () => STAGE_MAP,",
+    "    getSelectedStageIndex: () => selectedStageIndex,",
+    "    isBattleActive: () => battleActive,",
     "    getAnalyticsConfig: () => ANALYTICS_CONFIG,",
     "    getLiveAudienceConfig: () => LIVE_AUDIENCE_CONFIG,",
     "    getAudienceRequests: () => audienceRequests,",
@@ -277,6 +292,21 @@ assert(
 
 async function main() {
 vm.runInNewContext(scriptWithProbe, sandbox, { filename: "game.html" });
+
+assert.strictEqual(elements.get("stageMap").hidden, false, "stage map should be the initial view");
+assert.strictEqual(elements.get("battleView").hidden, true, "battle view should stay hidden before choosing a stage");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.isBattleActive(), false, "battle simulation should not start on the map");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getStageMap().length, 3, "stage map should expose three nodes");
+elements.get("lockedStage1").click();
+assert.strictEqual(elements.get("stageMap").hidden, false, "locked preview should keep the player on the map");
+assert.strictEqual(elements.get("battleView").hidden, true, "locked preview should not reveal battle controls");
+assert.match(elements.get("stageMapStatus").textContent, /準備中/, "locked preview should explain that the stage is not ready");
+elements.get("startStage0").click();
+assert.strictEqual(elements.get("stageMap").hidden, true, "starting stage 1 should hide the map");
+assert.strictEqual(elements.get("battleView").hidden, false, "starting stage 1 should show the battle");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.isBattleActive(), true, "starting stage 1 should enable battle simulation");
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getSelectedStageIndex(), 0, "stage 1 should select STAGES[0]");
+
 await sandbox.__keitoRuntimeProbe.trackLiveAudienceHeartbeat();
 
 assert.strictEqual(elements.get("stageChapter").textContent, "大地編");
@@ -383,6 +413,8 @@ const {
   sandbox: enabledSandbox
 } = createRuntime(scriptWithProbe);
 
+enabledElements.get("startStage0").click();
+
 assert.deepStrictEqual(
   JSON.parse(JSON.stringify(enabledSandbox.__keitoRuntimeProbe.getAnalyticsConfig())),
   {
@@ -479,6 +511,7 @@ assert.strictEqual(
 const {
   sandbox: propsSandbox
 } = createRuntime(scriptWithProbe);
+propsSandbox.__keitoRuntimeProbe.getState().stageIndex = 0;
 const beforeUnknownEventCount = propsSandbox.__keitoRuntimeProbe.getTrackedEvents().length;
 propsSandbox.__keitoRuntimeProbe.trackGameEvent("unknown_event", {
   stageId: "earth-wanwan-01"
@@ -539,6 +572,7 @@ const { elements: blockedElements, sandbox: blockedSandbox } = createRuntime(scr
 
 await blockedSandbox.__keitoRuntimeProbe.trackLiveAudienceHeartbeat();
 assert.strictEqual(blockedElements.get("viewerCount").textContent, "--");
+blockedElements.get("startStage0").click();
 blockedElements.get("spawnNeko").click();
 assert.strictEqual(blockedElements.get("money").textContent, "130");
 assert.match(blockedElements.get("message").innerHTML, /まるねこを召喚した/);

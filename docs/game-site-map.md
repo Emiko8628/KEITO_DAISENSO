@@ -7,7 +7,7 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 | Surface | File | Public role | Current behavior |
 | --- | --- | --- | --- |
 | Entry page | `index.html` | GitHub Pages entrypoint | Shows a small fallback page and immediately redirects to `game.html`. |
-| Game page | `game.html` | Primary playable experience | Runs the one-screen mini tower-defense game. |
+| Game page | `game.html` | Primary playable experience | Shows the stage map first, then runs the first playable mini tower-defense stage. |
 | Repository overview | `README.md` | Development and gameplay explanation | Describes controls, stage rules, characters, privacy-sensitive behavior, and current implementation notes. |
 | Live audience Worker | `workers/live-audience.mjs` | Real-access audience counter backend | Receives anonymous heartbeat signals and returns the current active count. |
 | Worker config | `wrangler.toml` | Cloudflare deployment config | Defines Durable Object binding, allowed origins, and TTL for audience counting. |
@@ -16,7 +16,8 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 
 | Responsibility | Current owner | Notes |
 | --- | --- | --- |
-| Stage data | `STAGES` in `game.html` | One playable stage exists. Stage 2 and 3 base images are already prepared as local assets, but stage data is not expanded yet. |
+| Stage data | `STAGES` in `game.html` | One playable stage exists. Stage 2 and 3 base images are prepared as local locked-preview assets, but battle data is not expanded yet. |
+| Stage map | `STAGE_MAP` in `game.html` | Shows Stage 1 as playable and Stage 2/3 as locked previews without adding new battle data. Design basis: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md). |
 | Ally unit data | `UNIT_TYPES` in `game.html` | Three summon buttons: `まるねこ 50`, `かたいねこ 80`, `こうげきねこ 110`. |
 | Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | First stage keeps the approved easy-readable enemy mix: frequent low-HP enemy, slower sturdy enemy, occasional variety enemy. |
 | Battle state | `state` in `game.html` | Money, base HP, EXP, defeats, units, enemies, effects, cooldowns, and result state are in memory only. |
@@ -49,24 +50,19 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 
 ## Next Improvement Queue
 
-1. **Stage map and stage selection design**
-   - Add a visible path from the current first stage toward future stages.
-   - Keep the first stage short, readable, and safe for quick play.
-   - Design spec: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md)
-
-2. **Game data extraction**
+1. **Game data extraction**
    - Move stage, unit, enemy, and asset definitions out of the large inline script only when a concrete next feature needs it.
    - Keep `game.html` working directly from GitHub Pages.
 
-3. **Player-facing top page**
+2. **Player-facing top page**
    - Consider turning `index.html` from immediate redirect into a small start screen with `ゲームを始める`, `このゲームについて`, and privacy notes.
    - Do this only after the game map is stable enough that the top page will not become marketing noise.
 
-4. **Search-engine sitemap**
+3. **Search-engine sitemap**
    - Add `sitemap.xml` only after there are multiple stable public pages worth indexing.
    - Current priority is lower because `game.html` is still the primary public surface.
 
-5. **Regression screenshots**
+4. **Regression screenshots**
    - Add an automated screenshot workflow if visual changes become frequent.
    - For now, local Chrome screenshots remain the manual visual gate for UI changes.
 

@@ -57,6 +57,149 @@ h1 {
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
 }
 
+[hidden] {
+  display: none !important;
+}
+
+.stage-map {
+  min-height: 640px;
+  padding: 22px;
+  background:
+    linear-gradient(180deg, rgba(102, 217, 239, 0.12), transparent 42%),
+    linear-gradient(180deg, #20283a 0%, #121824 100%);
+}
+
+.stage-map-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.stage-map-title {
+  margin: 0;
+  color: var(--gold);
+  font-size: clamp(22px, 3.2vw, 34px);
+  font-weight: 900;
+  line-height: 1.1;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.stage-map-status {
+  min-height: 34px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.stage-route {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.stage-node {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  min-height: 456px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  padding: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    #151b27;
+  text-align: left;
+}
+
+.stage-node::after {
+  display: none;
+}
+
+.stage-node:hover {
+  border-color: var(--gold);
+}
+
+.stage-node[data-stage-map-action="locked"] {
+  cursor: pointer;
+  filter: none;
+}
+
+.stage-node-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--gold);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.stage-node-badge {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.28);
+  font-size: 12px;
+}
+
+.stage-node-image-wrap {
+  display: grid;
+  place-items: end center;
+  min-height: 250px;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(102, 217, 239, 0.18), rgba(140, 233, 154, 0.16) 58%, rgba(51, 68, 94, 0.26) 59%),
+    #0f1722;
+  overflow: hidden;
+}
+
+.stage-node-image {
+  width: min(168px, 72%);
+  height: auto;
+  display: block;
+}
+
+.stage-node-copy {
+  display: grid;
+  gap: 4px;
+  color: var(--text);
+}
+
+.stage-node-chapter {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.stage-node-name {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.24;
+}
+
+.stage-node-meta {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.stage-node-locked {
+  opacity: 0.72;
+}
+
+.stage-node-locked .stage-node-image {
+  filter: grayscale(0.2) brightness(0.82);
+}
+
+.battle-view {
+  position: relative;
+}
+
 .battle-hud {
   position: absolute;
   top: 0;
@@ -285,6 +428,25 @@ button:disabled {
     padding: 8px 8px 20px;
     font-size: 14px;
   }
+  .stage-map {
+    min-height: auto;
+    padding: 12px;
+  }
+  .stage-map-header {
+    display: grid;
+  }
+  .stage-map-status {
+    text-align: left;
+  }
+  .stage-route {
+    grid-template-columns: 1fr;
+  }
+  .stage-node {
+    min-height: 0;
+  }
+  .stage-node-image-wrap {
+    min-height: 180px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -301,35 +463,79 @@ button:disabled {
   </header>
 
   <section class="game-shell" aria-label="ゲーム画面">
-    <div class="battle-hud" aria-label="ゲーム状況">
-      <div class="stage-chip">
-        <span class="pause-mark" aria-hidden="true">Ⅱ</span>
-        <span>
-          <span class="stage-title" id="stageName">大地をゆるがすワンワンステージ</span>
-          <span class="stage-sub"><span id="stageChapter">大地編</span>｜EXP <strong id="experience">0 / 100</strong></span>
-        </span>
+    <section class="stage-map" id="stageMap" aria-label="ステージマップ">
+      <div class="stage-map-header">
+        <h2 class="stage-map-title">ステージマップ</h2>
+        <p class="stage-map-status" id="stageMapStatus">1ステージ目を選んで開始できます。2・3ステージ目は準備中です。</p>
       </div>
-      <div class="hud-board">
-        <div class="money-line"><strong id="money">180</strong><span>円</span></div>
-        <div class="compact-stats">
-          <span>撃破 <strong id="defeats">0</strong></span>
+      <div class="stage-route" aria-label="ステージ一覧">
+        <button id="startStage0" class="stage-node stage-node-playable" data-stage-map-index="0" data-stage-map-action="start">
+          <span class="stage-node-label">STAGE 1 <span class="stage-node-badge">開始</span></span>
+          <span class="stage-node-image-wrap">
+            <img class="stage-node-image" src="assets/base-enemy-stage-1-gold-castle.png" alt="">
+          </span>
+          <span class="stage-node-copy">
+            <span class="stage-node-chapter">大地編</span>
+            <span class="stage-node-name">大地をゆるがすワンワンステージ</span>
+            <span class="stage-node-meta">最初の敵拠点をこわそう</span>
+          </span>
+        </button>
+        <button id="lockedStage1" class="stage-node stage-node-locked" data-stage-map-index="1" data-stage-map-action="locked">
+          <span class="stage-node-label">STAGE 2 <span class="stage-node-badge">準備中</span></span>
+          <span class="stage-node-image-wrap">
+            <img class="stage-node-image" src="assets/base-enemy-stage-2-green-castle.png" alt="">
+          </span>
+          <span class="stage-node-copy">
+            <span class="stage-node-chapter">埼玉編</span>
+            <span class="stage-node-name">みどりの砦は準備中</span>
+            <span class="stage-node-meta">次のアップデートで開放予定</span>
+          </span>
+        </button>
+        <button id="lockedStage2" class="stage-node stage-node-locked" data-stage-map-index="2" data-stage-map-action="locked">
+          <span class="stage-node-label">STAGE 3 <span class="stage-node-badge">準備中</span></span>
+          <span class="stage-node-image-wrap">
+            <img class="stage-node-image" src="assets/base-enemy-stage-3-red-black-castle.png" alt="">
+          </span>
+          <span class="stage-node-copy">
+            <span class="stage-node-chapter">東京編</span>
+            <span class="stage-node-name">赤黒の砦は準備中</span>
+            <span class="stage-node-meta">強敵ステージとして準備中</span>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="battle-view" id="battleView" aria-label="バトル" hidden>
+      <div class="battle-hud" aria-label="ゲーム状況">
+        <div class="stage-chip">
+          <span class="pause-mark" aria-hidden="true">Ⅱ</span>
+          <span>
+            <span class="stage-title" id="stageName">大地をゆるがすワンワンステージ</span>
+            <span class="stage-sub"><span id="stageChapter">大地編</span>｜EXP <strong id="experience">0 / 100</strong></span>
+          </span>
         </div>
-        <div class="audience-line" aria-label="現在の参戦人数">
-          <span class="audience-pulse" aria-hidden="true"></span>
-          <span>参戦中 <strong id="viewerCount">--</strong></span>
+        <div class="hud-board">
+          <div class="money-line"><strong id="money">180</strong><span>円</span></div>
+          <div class="compact-stats">
+            <span>撃破 <strong id="defeats">0</strong></span>
+          </div>
+          <div class="audience-line" aria-label="現在の参戦人数">
+            <span class="audience-pulse" aria-hidden="true"></span>
+            <span>参戦中 <strong id="viewerCount">--</strong></span>
+          </div>
         </div>
       </div>
-    </div>
-    <canvas id="game" width="960" height="480"></canvas>
-    <div class="summon-deck">
-      <button id="spawnNeko" class="summon-card">まるねこ 50</button>
-      <button id="spawnTank" class="summon-card">かたいねこ 80</button>
-      <button id="spawnBattle" class="summon-card">こうげきねこ 110</button>
-      <button id="restart" class="command-card">リスタート</button>
-    </div>
-    <div class="message" id="message">
-      右の陣地からユニットを召喚して、左の敵拠点をこわそう。
-    </div>
+      <canvas id="game" width="960" height="480"></canvas>
+      <div class="summon-deck">
+        <button id="spawnNeko" class="summon-card">まるねこ 50</button>
+        <button id="spawnTank" class="summon-card">かたいねこ 80</button>
+        <button id="spawnBattle" class="summon-card">こうげきねこ 110</button>
+        <button id="restart" class="command-card">リスタート</button>
+      </div>
+      <div class="message" id="message">
+        右の陣地からユニットを召喚して、左の敵拠点をこわそう。
+      </div>
+    </section>
   </section>
 
   <p class="note">非公式ファン制作｜Google Analyticsで利用状況を計測し、現在の参戦人数表示のため匿名の一時信号を送信します。個人情報やゲーム内入力内容は保存しません。</p>
@@ -342,6 +548,12 @@ button:disabled {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
   const ui = {
+    stageMap: document.getElementById("stageMap"),
+    battleView: document.getElementById("battleView"),
+    stageMapStatus: document.getElementById("stageMapStatus"),
+    startStage0: document.getElementById("startStage0"),
+    lockedStage1: document.getElementById("lockedStage1"),
+    lockedStage2: document.getElementById("lockedStage2"),
     stageChapter: document.getElementById("stageChapter"),
     stageName: document.getElementById("stageName"),
     money: document.getElementById("money"),
@@ -434,6 +646,34 @@ button:disabled {
     }
   ];
 
+  const STAGE_MAP = Object.freeze([
+    {
+      id: "earth-wanwan-01",
+      chapter: "大地編",
+      name: "大地をゆるがすワンワンステージ",
+      status: "playable",
+      stageIndex: 0,
+      baseSprite: "assets/base-enemy-stage-1-gold-castle.png",
+      buttonId: "startStage0"
+    },
+    {
+      id: "saitama-preview-01",
+      chapter: "埼玉編",
+      name: "みどりの砦は準備中",
+      status: "locked",
+      baseSprite: "assets/base-enemy-stage-2-green-castle.png",
+      buttonId: "lockedStage1"
+    },
+    {
+      id: "tokyo-preview-01",
+      chapter: "東京編",
+      name: "赤黒の砦は準備中",
+      status: "locked",
+      baseSprite: "assets/base-enemy-stage-3-red-black-castle.png",
+      buttonId: "lockedStage2"
+    }
+  ]);
+
   const UNIT_TYPES = {
     neko: {
       label: "まるねこ",
@@ -525,6 +765,8 @@ button:disabled {
   };
 
   let state;
+  let selectedStageIndex = 0;
+  let battleActive = false;
   let lastTime = performance.now();
   const spriteCache = new Map();
   const backgroundCache = new Map();
@@ -673,10 +915,11 @@ button:disabled {
     ui.viewerCount.textContent = Number.isInteger(count) ? String(count) : "--";
   }
 
-  function resetGame() {
-    const stage = STAGES[0];
-    state = {
-      stageIndex: 0,
+  function createInitialState(stageIndex) {
+    const safeStageIndex = STAGES[stageIndex] ? stageIndex : 0;
+    const stage = STAGES[safeStageIndex];
+    return {
+      stageIndex: safeStageIndex,
       money: stage.startMoney,
       allyBaseHp: stage.allyBaseHp,
       enemyBaseHp: stage.enemyBaseHp,
@@ -701,9 +944,72 @@ button:disabled {
       clearBonusApplied: false,
       message: `${stage.chapter}、${stage.name}。右の陣地からユニットを召喚して、左の敵拠点をこわそう。`
     };
+  }
+
+  function initializeGame() {
+    selectedStageIndex = 0;
+    state = createInitialState(selectedStageIndex);
+    renderStageMap();
+    updateUI();
+    showStageMap();
+    trackGameOpen();
+  }
+
+  function resetGame() {
+    state = createInitialState(selectedStageIndex);
     lastTime = performance.now();
+    showBattleView();
     updateUI();
     trackGameOpen();
+  }
+
+  function startStage(stageIndex) {
+    const mapNode = STAGE_MAP.find((node) => node.stageIndex === stageIndex && node.status === "playable");
+    if (!mapNode || !STAGES[stageIndex]) {
+      updateStageMapStatus("このステージはまだ準備中です。");
+      showStageMap();
+      return;
+    }
+    selectedStageIndex = stageIndex;
+    resetGame();
+  }
+
+  function selectStageMapNode(mapIndex) {
+    const node = STAGE_MAP[mapIndex];
+    if (!node) return;
+    if (node.status !== "playable") {
+      updateStageMapStatus(`${node.chapter}は準備中です。もう少し待ってね。`);
+      showStageMap();
+      return;
+    }
+    startStage(node.stageIndex);
+  }
+
+  function renderStageMap() {
+    STAGE_MAP.forEach((node, index) => {
+      const button = ui[node.buttonId];
+      if (!button) return;
+      button.dataset.stageMapIndex = String(index);
+      button.dataset.stageMapAction = node.status === "playable" ? "start" : "locked";
+      button.setAttribute("aria-label", node.status === "playable" ? `${node.name}を開始` : `${node.name}。準備中`);
+    });
+    updateStageMapStatus("1ステージ目を選んで開始できます。2・3ステージ目は準備中です。");
+  }
+
+  function updateStageMapStatus(message) {
+    ui.stageMapStatus.textContent = message;
+  }
+
+  function showStageMap() {
+    battleActive = false;
+    ui.stageMap.hidden = false;
+    ui.battleView.hidden = true;
+  }
+
+  function showBattleView() {
+    battleActive = true;
+    ui.stageMap.hidden = true;
+    ui.battleView.hidden = false;
   }
 
   function createFighter(kind, type, x, team) {
@@ -733,14 +1039,14 @@ button:disabled {
   }
 
   function spendMoney(amount) {
-    if (state.money < amount || state.gameOver) return false;
+    if (!battleActive || state.money < amount || state.gameOver) return false;
     state.money -= amount;
     return true;
   }
 
   function canSummon(kind) {
     const type = UNIT_TYPES[kind];
-    return !state.gameOver && state.money >= type.cost && state.summonCooldowns[kind] <= 0;
+    return battleActive && !state.gameOver && state.money >= type.cost && state.summonCooldowns[kind] <= 0;
   }
 
   function formatSummonLabel(kind) {
@@ -750,6 +1056,7 @@ button:disabled {
 
   function spawnUnit(kind) {
     const type = UNIT_TYPES[kind];
+    if (!battleActive) return;
     if (state.gameOver) return;
     if (state.summonCooldowns[kind] > 0) {
       state.message = `${type.label}は準備中。あと少し待とう。`;
@@ -1031,6 +1338,7 @@ button:disabled {
   }
 
   function updateGame(deltaMs) {
+    if (!battleActive) return;
     const dt = Math.min(deltaMs / 16.67, 3);
     if (state.gameOver) {
       updateEffects(dt);
@@ -1445,11 +1753,16 @@ button:disabled {
   function loop(now) {
     const deltaMs = now - lastTime;
     lastTime = now;
-    updateGame(deltaMs);
-    draw();
+    if (battleActive) {
+      updateGame(deltaMs);
+      draw();
+    }
     requestAnimationFrame(loop);
   }
 
+  ui.startStage0.addEventListener("click", () => selectStageMapNode(0));
+  ui.lockedStage1.addEventListener("click", () => selectStageMapNode(1));
+  ui.lockedStage2.addEventListener("click", () => selectStageMapNode(2));
   ui.spawnNeko.addEventListener("click", () => spawnUnit("neko"));
   ui.spawnTank.addEventListener("click", () => spawnUnit("tank"));
   ui.spawnBattle.addEventListener("click", () => spawnUnit("battle"));
@@ -1459,7 +1772,7 @@ button:disabled {
   loadStageBackgrounds();
   loadBaseImages();
   initializeAnalyticsProvider();
-  resetGame();
+  initializeGame();
   initializeLiveAudience();
   requestAnimationFrame(loop);
 })();

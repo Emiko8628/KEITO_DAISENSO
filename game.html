@@ -611,10 +611,32 @@ button:disabled {
     intervalId: null
   };
 
-  const ALLY_BASE_SPRITE = "assets/base-ally-blue-castle.png";
+  const GAME_ASSETS = Object.freeze({
+    bases: Object.freeze({
+      ally: "assets/base-ally-blue-castle.png",
+      enemyStage1: "assets/base-enemy-stage-1-gold-castle.png",
+      enemyStage2: "assets/base-enemy-stage-2-green-castle.png",
+      enemyStage3: "assets/base-enemy-stage-3-red-black-castle.png"
+    }),
+    backgrounds: Object.freeze({
+      earthWanwan: "assets/stage-earth-wanwan-background.png"
+    }),
+    allies: Object.freeze({
+      neko: "assets/ally-neko.png",
+      tank: "assets/ally-tank-neko.png",
+      battle: "assets/ally-battle-neko.png"
+    }),
+    enemies: Object.freeze({
+      pyoko: "assets/enemy-pyoko-neko.png",
+      nyoro: "assets/enemy-nyoro-ghost.png",
+      trio: "assets/enemy-wachawacha-trio.png"
+    })
+  });
+
+  const ALLY_BASE_SPRITE = GAME_ASSETS.bases.ally;
   const FUTURE_ENEMY_BASE_SPRITES = Object.freeze([
-    "assets/base-enemy-stage-2-green-castle.png",
-    "assets/base-enemy-stage-3-red-black-castle.png"
+    GAME_ASSETS.bases.enemyStage2,
+    GAME_ASSETS.bases.enemyStage3
   ]);
 
   const STAGES = [
@@ -627,8 +649,8 @@ button:disabled {
       enemyBaseHp: 70,
       targetExperience: 100,
       clearBonus: 120,
-      background: "assets/stage-earth-wanwan-background.png",
-      enemyBaseSprite: "assets/base-enemy-stage-1-gold-castle.png",
+      background: GAME_ASSETS.backgrounds.earthWanwan,
+      enemyBaseSprite: GAME_ASSETS.bases.enemyStage1,
       enemyDefeatExperience: {
         pyoko: 18,
         nyoro: 30,
@@ -653,7 +675,7 @@ button:disabled {
       name: "大地をゆるがすワンワンステージ",
       status: "playable",
       stageIndex: 0,
-      baseSprite: "assets/base-enemy-stage-1-gold-castle.png",
+      baseSprite: GAME_ASSETS.bases.enemyStage1,
       buttonId: "startStage0"
     },
     {
@@ -661,7 +683,7 @@ button:disabled {
       chapter: "埼玉編",
       name: "みどりの砦は準備中",
       status: "locked",
-      baseSprite: "assets/base-enemy-stage-2-green-castle.png",
+      baseSprite: GAME_ASSETS.bases.enemyStage2,
       buttonId: "lockedStage1"
     },
     {
@@ -669,7 +691,7 @@ button:disabled {
       chapter: "東京編",
       name: "赤黒の砦は準備中",
       status: "locked",
-      baseSprite: "assets/base-enemy-stage-3-red-black-castle.png",
+      baseSprite: GAME_ASSETS.bases.enemyStage3,
       buttonId: "lockedStage2"
     }
   ]);
@@ -686,7 +708,7 @@ button:disabled {
       summonCooldownMs: 1400,
       rewardOnWin: 0,
       color: "#66d9ef",
-      sprite: "assets/ally-neko.png",
+      sprite: GAME_ASSETS.allies.neko,
       spriteWidth: 54,
       spriteHeight: 56
     },
@@ -701,7 +723,7 @@ button:disabled {
       summonCooldownMs: 2600,
       rewardOnWin: 0,
       color: "#74c0fc",
-      sprite: "assets/ally-tank-neko.png",
+      sprite: GAME_ASSETS.allies.tank,
       spriteWidth: 46,
       spriteHeight: 70
     },
@@ -716,7 +738,7 @@ button:disabled {
       summonCooldownMs: 3200,
       rewardOnWin: 0,
       color: "#ffd43b",
-      sprite: "assets/ally-battle-neko.png",
+      sprite: GAME_ASSETS.allies.battle,
       spriteWidth: 64,
       spriteHeight: 58
     }
@@ -732,7 +754,7 @@ button:disabled {
       cooldown: 62,
       reward: 24,
       color: "#ff8787",
-      sprite: "assets/enemy-pyoko-neko.png",
+      sprite: GAME_ASSETS.enemies.pyoko,
       spriteWidth: 58,
       spriteHeight: 44
     },
@@ -745,7 +767,7 @@ button:disabled {
       cooldown: 78,
       reward: 42,
       color: "#f06595",
-      sprite: "assets/enemy-nyoro-ghost.png",
+      sprite: GAME_ASSETS.enemies.nyoro,
       spriteWidth: 46,
       spriteHeight: 74
     },
@@ -758,11 +780,17 @@ button:disabled {
       cooldown: 72,
       reward: 36,
       color: "#ffa8a8",
-      sprite: "assets/enemy-wachawacha-trio.png",
+      sprite: GAME_ASSETS.enemies.trio,
       spriteWidth: 68,
       spriteHeight: 54
     }
   };
+
+  const playableStageIds = new Set(STAGES.map((stage) => stage.id));
+  const stageMapPlayableNodes = STAGE_MAP.filter((node) => node.status === "playable");
+  if (!stageMapPlayableNodes.every((node) => playableStageIds.has(node.id))) {
+    throw new Error("Playable stage-map nodes must point to real stages.");
+  }
 
   let state;
   let selectedStageIndex = 0;

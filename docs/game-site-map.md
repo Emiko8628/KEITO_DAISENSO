@@ -26,7 +26,7 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 | Summon controls | `.summon-deck` buttons in `game.html` | Buttons show unit name and cost, with cooldown progress in the button bar. |
 | Analytics | `ANALYTICS_CONFIG` and tracking helpers in `game.html` | Google Analytics sends only allowed game events and safe string properties. |
 | Live audience | `LIVE_AUDIENCE_CONFIG` in `game.html` plus Worker | Sends only an anonymous page-scoped temporary session signal to the Worker. |
-| Visual assets | `assets/` | Character, base, and background images are local files. Canvas fallback rendering remains for brittle image loading paths. |
+| Visual assets | `GAME_ASSETS` in `game.html` plus `assets/` | Character, base, and background paths are centralized before use. Canvas fallback rendering remains for brittle image loading paths. |
 
 ## Public Communication And Safety Map
 

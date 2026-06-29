@@ -23,9 +23,10 @@ const requiredAllySprites = [
 const requiredStageBackground = "assets/stage-earth-wanwan-background.png";
 const requiredBaseSprites = [
   "assets/base-ally-blue-castle.png",
-  "assets/base-enemy-stage-1-gold-castle.png",
-  "assets/base-enemy-stage-2-green-castle.png",
-  "assets/base-enemy-stage-3-red-black-castle.png"
+  "assets/base-enemy-stage-1-gold-castle-v2.png",
+  "assets/base-enemy-stage-2-beach-castle.png",
+  "assets/base-enemy-stage-3-forest-castle.png",
+  "assets/base-enemy-stage-4-ghost-castle.png"
 ];
 
 function numberConstant(name) {
@@ -313,6 +314,12 @@ contains(
 
 contains(
   script,
+  "GAME_ASSETS.bases.enemyStage4",
+  "stage 4 future base should use central asset registry"
+);
+
+contains(
+  script,
   "const STAGE_MAP = Object.freeze",
   "stage map navigation source of truth"
 );
@@ -337,26 +344,38 @@ contains(
 
 contains(
   script,
-  'id: "saitama-preview-01"',
+  'id: "beach-preview-01"',
   "stage map second preview node id"
 );
 
 contains(
   script,
-  'chapter: "埼玉編"',
+  'chapter: "海辺編"',
   "stage map second preview chapter"
 );
 
 contains(
   script,
-  'id: "tokyo-preview-01"',
+  'id: "forest-preview-01"',
   "stage map third preview node id"
 );
 
 contains(
   script,
-  'chapter: "東京編"',
+  'chapter: "森編"',
   "stage map third preview chapter"
+);
+
+contains(
+  script,
+  'id: "ghost-night-preview-01"',
+  "stage map fourth preview node id"
+);
+
+contains(
+  script,
+  'chapter: "おばけ屋敷編"',
+  "stage map fourth preview chapter"
 );
 
 contains(
@@ -397,6 +416,12 @@ contains(
 
 contains(
   html,
+  'id="lockedStage3"',
+  "locked fourth stage preview control"
+);
+
+contains(
+  html,
   'data-stage-map-action="start"',
   "stage map start action marker"
 );
@@ -429,6 +454,12 @@ contains(
   script,
   "baseSprite: GAME_ASSETS.bases.enemyStage3",
   "stage map third base should use central asset registry"
+);
+
+contains(
+  script,
+  "baseSprite: GAME_ASSETS.bases.enemyStage4",
+  "stage map fourth base should use central asset registry"
 );
 
 contains(
@@ -501,6 +532,12 @@ contains(
   script,
   "function drawBaseImage",
   "base image renderer"
+);
+
+contains(
+  script,
+  "baseImageCache.set(sprite, prepareSprite(image));",
+  "base image loader should remove generated-image checkerboard backgrounds"
 );
 
 contains(

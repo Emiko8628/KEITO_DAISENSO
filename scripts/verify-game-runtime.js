@@ -85,6 +85,7 @@ const ids = [
   "startStage0",
   "lockedStage1",
   "lockedStage2",
+  "lockedStage3",
   "game",
   "stageChapter",
   "stageName",
@@ -296,8 +297,8 @@ vm.runInNewContext(scriptWithProbe, sandbox, { filename: "game.html" });
 assert.strictEqual(elements.get("stageMap").hidden, false, "stage map should be the initial view");
 assert.strictEqual(elements.get("battleView").hidden, true, "battle view should stay hidden before choosing a stage");
 assert.strictEqual(sandbox.__keitoRuntimeProbe.isBattleActive(), false, "battle simulation should not start on the map");
-assert.strictEqual(sandbox.__keitoRuntimeProbe.getStageMap().length, 3, "stage map should expose three nodes");
-elements.get("lockedStage1").click();
+assert.strictEqual(sandbox.__keitoRuntimeProbe.getStageMap().length, 4, "stage map should expose four nodes");
+elements.get("lockedStage3").click();
 assert.strictEqual(elements.get("stageMap").hidden, false, "locked preview should keep the player on the map");
 assert.strictEqual(elements.get("battleView").hidden, true, "locked preview should not reveal battle controls");
 assert.match(elements.get("stageMapStatus").textContent, /準備中/, "locked preview should explain that the stage is not ready");

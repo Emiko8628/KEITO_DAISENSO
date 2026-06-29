@@ -97,7 +97,7 @@ h1 {
 
 .stage-route {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   align-items: stretch;
 }
@@ -466,13 +466,13 @@ button:disabled {
     <section class="stage-map" id="stageMap" aria-label="ステージマップ">
       <div class="stage-map-header">
         <h2 class="stage-map-title">ステージマップ</h2>
-        <p class="stage-map-status" id="stageMapStatus">1ステージ目を選んで開始できます。2・3ステージ目は準備中です。</p>
+        <p class="stage-map-status" id="stageMapStatus">1ステージ目を選んで開始できます。2〜4ステージ目は準備中です。</p>
       </div>
       <div class="stage-route" aria-label="ステージ一覧">
         <button id="startStage0" class="stage-node stage-node-playable" data-stage-map-index="0" data-stage-map-action="start">
           <span class="stage-node-label">STAGE 1 <span class="stage-node-badge">開始</span></span>
           <span class="stage-node-image-wrap">
-            <img class="stage-node-image" src="assets/base-enemy-stage-1-gold-castle.png" alt="">
+            <img class="stage-node-image" src="assets/base-enemy-stage-1-gold-castle-v2.png" alt="">
           </span>
           <span class="stage-node-copy">
             <span class="stage-node-chapter">大地編</span>
@@ -483,23 +483,34 @@ button:disabled {
         <button id="lockedStage1" class="stage-node stage-node-locked" data-stage-map-index="1" data-stage-map-action="locked">
           <span class="stage-node-label">STAGE 2 <span class="stage-node-badge">準備中</span></span>
           <span class="stage-node-image-wrap">
-            <img class="stage-node-image" src="assets/base-enemy-stage-2-green-castle.png" alt="">
+            <img class="stage-node-image" src="assets/base-enemy-stage-2-beach-castle.png" alt="">
           </span>
           <span class="stage-node-copy">
-            <span class="stage-node-chapter">埼玉編</span>
-            <span class="stage-node-name">みどりの砦は準備中</span>
+            <span class="stage-node-chapter">海辺編</span>
+            <span class="stage-node-name">ざぶざぶビーチ防衛戦は準備中</span>
             <span class="stage-node-meta">次のアップデートで開放予定</span>
           </span>
         </button>
         <button id="lockedStage2" class="stage-node stage-node-locked" data-stage-map-index="2" data-stage-map-action="locked">
           <span class="stage-node-label">STAGE 3 <span class="stage-node-badge">準備中</span></span>
           <span class="stage-node-image-wrap">
-            <img class="stage-node-image" src="assets/base-enemy-stage-3-red-black-castle.png" alt="">
+            <img class="stage-node-image" src="assets/base-enemy-stage-3-forest-castle.png" alt="">
           </span>
           <span class="stage-node-copy">
-            <span class="stage-node-chapter">東京編</span>
-            <span class="stage-node-name">赤黒の砦は準備中</span>
-            <span class="stage-node-meta">強敵ステージとして準備中</span>
+            <span class="stage-node-chapter">森編</span>
+            <span class="stage-node-name">もりもり迷いのこみちは準備中</span>
+            <span class="stage-node-meta">森のステージとして準備中</span>
+          </span>
+        </button>
+        <button id="lockedStage3" class="stage-node stage-node-locked" data-stage-map-index="3" data-stage-map-action="locked">
+          <span class="stage-node-label">STAGE 4 <span class="stage-node-badge">準備中</span></span>
+          <span class="stage-node-image-wrap">
+            <img class="stage-node-image" src="assets/base-enemy-stage-4-ghost-castle.png" alt="">
+          </span>
+          <span class="stage-node-copy">
+            <span class="stage-node-chapter">おばけ屋敷編</span>
+            <span class="stage-node-name">ふわふわおばけの夜道は準備中</span>
+            <span class="stage-node-meta">夜道ステージとして準備中</span>
           </span>
         </button>
       </div>
@@ -554,6 +565,7 @@ button:disabled {
     startStage0: document.getElementById("startStage0"),
     lockedStage1: document.getElementById("lockedStage1"),
     lockedStage2: document.getElementById("lockedStage2"),
+    lockedStage3: document.getElementById("lockedStage3"),
     stageChapter: document.getElementById("stageChapter"),
     stageName: document.getElementById("stageName"),
     money: document.getElementById("money"),
@@ -614,9 +626,10 @@ button:disabled {
   const GAME_ASSETS = Object.freeze({
     bases: Object.freeze({
       ally: "assets/base-ally-blue-castle.png",
-      enemyStage1: "assets/base-enemy-stage-1-gold-castle.png",
-      enemyStage2: "assets/base-enemy-stage-2-green-castle.png",
-      enemyStage3: "assets/base-enemy-stage-3-red-black-castle.png"
+      enemyStage1: "assets/base-enemy-stage-1-gold-castle-v2.png",
+      enemyStage2: "assets/base-enemy-stage-2-beach-castle.png",
+      enemyStage3: "assets/base-enemy-stage-3-forest-castle.png",
+      enemyStage4: "assets/base-enemy-stage-4-ghost-castle.png"
     }),
     backgrounds: Object.freeze({
       earthWanwan: "assets/stage-earth-wanwan-background.png"
@@ -636,7 +649,8 @@ button:disabled {
   const ALLY_BASE_SPRITE = GAME_ASSETS.bases.ally;
   const FUTURE_ENEMY_BASE_SPRITES = Object.freeze([
     GAME_ASSETS.bases.enemyStage2,
-    GAME_ASSETS.bases.enemyStage3
+    GAME_ASSETS.bases.enemyStage3,
+    GAME_ASSETS.bases.enemyStage4
   ]);
 
   const STAGES = [
@@ -679,20 +693,28 @@ button:disabled {
       buttonId: "startStage0"
     },
     {
-      id: "saitama-preview-01",
-      chapter: "埼玉編",
-      name: "みどりの砦は準備中",
+      id: "beach-preview-01",
+      chapter: "海辺編",
+      name: "ざぶざぶビーチ防衛戦は準備中",
       status: "locked",
       baseSprite: GAME_ASSETS.bases.enemyStage2,
       buttonId: "lockedStage1"
     },
     {
-      id: "tokyo-preview-01",
-      chapter: "東京編",
-      name: "赤黒の砦は準備中",
+      id: "forest-preview-01",
+      chapter: "森編",
+      name: "もりもり迷いのこみちは準備中",
       status: "locked",
       baseSprite: GAME_ASSETS.bases.enemyStage3,
       buttonId: "lockedStage2"
+    },
+    {
+      id: "ghost-night-preview-01",
+      chapter: "おばけ屋敷編",
+      name: "ふわふわおばけの夜道は準備中",
+      status: "locked",
+      baseSprite: GAME_ASSETS.bases.enemyStage4,
+      buttonId: "lockedStage3"
     }
   ]);
 
@@ -1021,7 +1043,7 @@ button:disabled {
       button.dataset.stageMapAction = node.status === "playable" ? "start" : "locked";
       button.setAttribute("aria-label", node.status === "playable" ? `${node.name}を開始` : `${node.name}。準備中`);
     });
-    updateStageMapStatus("1ステージ目を選んで開始できます。2・3ステージ目は準備中です。");
+    updateStageMapStatus("1ステージ目を選んで開始できます。2〜4ステージ目は準備中です。");
   }
 
   function updateStageMapStatus(message) {
@@ -1161,7 +1183,7 @@ button:disabled {
     baseSprites.forEach((sprite) => {
       const image = new Image();
       image.onload = () => {
-        baseImageCache.set(sprite, image);
+        baseImageCache.set(sprite, prepareSprite(image));
       };
       image.onerror = () => {
         baseImageCache.set(sprite, null);
@@ -1791,6 +1813,7 @@ button:disabled {
   ui.startStage0.addEventListener("click", () => selectStageMapNode(0));
   ui.lockedStage1.addEventListener("click", () => selectStageMapNode(1));
   ui.lockedStage2.addEventListener("click", () => selectStageMapNode(2));
+  ui.lockedStage3.addEventListener("click", () => selectStageMapNode(3));
   ui.spawnNeko.addEventListener("click", () => spawnUnit("neko"));
   ui.spawnTank.addEventListener("click", () => spawnUnit("tank"));
   ui.spawnBattle.addEventListener("click", () => spawnUnit("battle"));

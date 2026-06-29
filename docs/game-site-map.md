@@ -16,8 +16,8 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 
 | Responsibility | Current owner | Notes |
 | --- | --- | --- |
-| Stage data | `STAGES` in `game.html` | One playable stage exists. Stage 2 and 3 base images are prepared as local locked-preview assets, but battle data is not expanded yet. |
-| Stage map | `STAGE_MAP` in `game.html` | Shows Stage 1 as playable and Stage 2/3 as locked previews without adding new battle data. Design basis: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md). |
+| Stage data | `STAGES` in `game.html` | One playable stage exists. Stage 2〜4 base images are prepared as local locked-preview assets, but battle data is not expanded yet. |
+| Stage map | `STAGE_MAP` in `game.html` | Shows Stage 1 as playable and Stage 2〜4 as locked previews without adding new battle data. Design basis: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md). |
 | Ally unit data | `UNIT_TYPES` in `game.html` | Three summon buttons: `まるねこ 50`, `かたいねこ 80`, `こうげきねこ 110`. |
 | Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | First stage keeps the approved easy-readable enemy mix: frequent low-HP enemy, slower sturdy enemy, occasional variety enemy. |
 | Battle state | `state` in `game.html` | Money, base HP, EXP, defeats, units, enemies, effects, cooldowns, and result state are in memory only. |

@@ -22,7 +22,7 @@ const requiredAllySprites = [
 ];
 const requiredStageBackground = "assets/stage-earth-wanwan-background.png";
 const requiredBaseSprites = [
-  "assets/base-ally-blue-castle.png",
+  "assets/base-ally-blue-castle-v2.png",
   "assets/base-enemy-stage-1-gold-castle-v2.png",
   "assets/base-enemy-stage-2-beach-castle.png",
   "assets/base-enemy-stage-3-forest-castle.png",

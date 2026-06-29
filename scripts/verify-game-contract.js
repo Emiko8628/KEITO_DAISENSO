@@ -11,14 +11,14 @@ assert(scriptMatch, "game.html must include an inline script block");
 
 const script = scriptMatch[1];
 const requiredEnemySprites = [
-  { name: "ぴょこネコ", file: "assets/enemy-pyoko-neko.png" },
-  { name: "にょろゴースト", file: "assets/enemy-nyoro-ghost.png" },
-  { name: "わちゃわちゃトリオ", file: "assets/enemy-wachawacha-trio.png" }
+  { name: "ぴょこネコ", file: "assets/enemy-pyoko-neko.png", assetRef: "GAME_ASSETS.enemies.pyoko" },
+  { name: "にょろゴースト", file: "assets/enemy-nyoro-ghost.png", assetRef: "GAME_ASSETS.enemies.nyoro" },
+  { name: "わちゃわちゃトリオ", file: "assets/enemy-wachawacha-trio.png", assetRef: "GAME_ASSETS.enemies.trio" }
 ];
 const requiredAllySprites = [
-  { name: "まるねこ", file: "assets/ally-neko.png", buttonId: "spawnNeko", buttonText: "まるねこ 50" },
-  { name: "かたいねこ", file: "assets/ally-tank-neko.png", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
-  { name: "こうげきねこ", file: "assets/ally-battle-neko.png", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" }
+  { name: "まるねこ", file: "assets/ally-neko.png", assetRef: "GAME_ASSETS.allies.neko", buttonId: "spawnNeko", buttonText: "まるねこ 50" },
+  { name: "かたいねこ", file: "assets/ally-tank-neko.png", assetRef: "GAME_ASSETS.allies.tank", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
+  { name: "こうげきねこ", file: "assets/ally-battle-neko.png", assetRef: "GAME_ASSETS.allies.battle", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" }
 ];
 const requiredStageBackground = "assets/stage-earth-wanwan-background.png";
 const requiredBaseSprites = [
@@ -76,6 +76,36 @@ assert.strictEqual(
 
 contains(
   script,
+  "const GAME_ASSETS = Object.freeze",
+  "central game asset registry"
+);
+
+contains(
+  script,
+  "bases: Object.freeze",
+  "base asset registry"
+);
+
+contains(
+  script,
+  "backgrounds: Object.freeze",
+  "background asset registry"
+);
+
+contains(
+  script,
+  "allies: Object.freeze",
+  "ally asset registry"
+);
+
+contains(
+  script,
+  "enemies: Object.freeze",
+  "enemy asset registry"
+);
+
+contains(
+  script,
   "const STAGES = [",
   "stage data"
 );
@@ -105,7 +135,7 @@ assert(
 
 contains(
   script,
-  `background: "${requiredStageBackground}"`,
+  "background: GAME_ASSETS.backgrounds.earthWanwan",
   "first stage background image"
 );
 
@@ -169,7 +199,7 @@ for (const sprite of requiredEnemySprites) {
     `missing enemy sprite asset: ${sprite.file}`
   );
   contains(script, `label: "${sprite.name}"`, `${sprite.name} enemy label`);
-  contains(script, `sprite: "${sprite.file}"`, `${sprite.name} enemy sprite`);
+  contains(script, `sprite: ${sprite.assetRef}`, `${sprite.name} enemy sprite`);
 }
 
 for (const sprite of requiredAllySprites) {
@@ -178,7 +208,7 @@ for (const sprite of requiredAllySprites) {
     `missing ally sprite asset: ${sprite.file}`
   );
   contains(script, `label: "${sprite.name}"`, `${sprite.name} ally label`);
-  contains(script, `sprite: "${sprite.file}"`, `${sprite.name} ally sprite`);
+  contains(script, `sprite: ${sprite.assetRef}`, `${sprite.name} ally sprite`);
   contains(html, `id="${sprite.buttonId}"`, `${sprite.name} summon button id`);
   contains(html, `>${sprite.buttonText}</button>`, `${sprite.name} summon button text`);
 }
@@ -253,13 +283,13 @@ for (const sprite of requiredBaseSprites) {
 
 contains(
   script,
-  'const ALLY_BASE_SPRITE = "assets/base-ally-blue-castle.png"',
+  "const ALLY_BASE_SPRITE = GAME_ASSETS.bases.ally",
   "shared ally base sprite"
 );
 
 contains(
   script,
-  'enemyBaseSprite: "assets/base-enemy-stage-1-gold-castle.png"',
+  "enemyBaseSprite: GAME_ASSETS.bases.enemyStage1",
   "first stage enemy base sprite"
 );
 
@@ -267,6 +297,18 @@ contains(
   script,
   "const FUTURE_ENEMY_BASE_SPRITES = Object.freeze",
   "future enemy base sprite registry"
+);
+
+contains(
+  script,
+  "GAME_ASSETS.bases.enemyStage2",
+  "stage 2 future base should use central asset registry"
+);
+
+contains(
+  script,
+  "GAME_ASSETS.bases.enemyStage3",
+  "stage 3 future base should use central asset registry"
 );
 
 contains(
@@ -369,6 +411,42 @@ contains(
   html,
   "準備中",
   "locked stage preview copy"
+);
+
+contains(
+  script,
+  "baseSprite: GAME_ASSETS.bases.enemyStage1",
+  "stage map first base should use central asset registry"
+);
+
+contains(
+  script,
+  "baseSprite: GAME_ASSETS.bases.enemyStage2",
+  "stage map second base should use central asset registry"
+);
+
+contains(
+  script,
+  "baseSprite: GAME_ASSETS.bases.enemyStage3",
+  "stage map third base should use central asset registry"
+);
+
+contains(
+  script,
+  "const playableStageIds = new Set(STAGES.map((stage) => stage.id));",
+  "stage map playable nodes should be validated against stage data"
+);
+
+contains(
+  script,
+  "const stageMapPlayableNodes = STAGE_MAP.filter((node) => node.status === \"playable\");",
+  "stage map playable node set"
+);
+
+contains(
+  script,
+  "stageMapPlayableNodes.every((node) => playableStageIds.has(node.id))",
+  "playable stage map nodes must point to real stage ids"
 );
 
 contains(

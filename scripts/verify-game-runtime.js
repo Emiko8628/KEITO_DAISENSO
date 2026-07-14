@@ -418,17 +418,17 @@ assert.strictEqual(elements.get("experience").textContent, "0 / 100");
 assert.strictEqual(elements.get("spawnNeko").disabled, false);
 assert.strictEqual(
   elements.get("spawnNeko").style.values["--summon-icon"],
-  'url("assets/ally-neko.png")',
+  'url("assets/ally-neko-v2.png")',
   "まるねこ summon button should display its unit sprite"
 );
 assert.strictEqual(
   elements.get("spawnTank").style.values["--summon-icon"],
-  'url("assets/ally-tank-neko.png")',
+  'url("assets/ally-tank-neko-v2.png")',
   "かたいねこ summon button should display its unit sprite"
 );
 assert.strictEqual(
   elements.get("spawnBattle").style.values["--summon-icon"],
-  'url("assets/ally-battle-neko.png")',
+  'url("assets/ally-battle-neko-v2.png")',
   "こうげきねこ summon button should display its unit sprite"
 );
 assert.strictEqual(

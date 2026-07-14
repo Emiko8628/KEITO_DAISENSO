@@ -26,7 +26,7 @@ This spec records the current stage-map state after making Stage 2 `ざぶざぶ
 | Stage 1 playable node | `earth-wanwan-01` in `STAGE_MAP` with `status: "playable"` and `stageIndex: 0` | Complete |
 | Stage 2 playable node | `beach-defense-01` in `STAGE_MAP` with `status: "playable"`, `stageIndex: 1`, and `assets/base-enemy-stage-2-beach-castle.png` | Complete |
 | Stage 2 enemy variants | `beachPyoko`, `beachNyoro`, and `beachTrio` in `ENEMY_TYPES`, using dedicated local sprites with stronger stats | Complete |
-| Fourth ally unit | `あしながうみネコ` in `UNIT_TYPES`, using transparent `assets/ally-ashinaga-umi-neko-v3.png`; the summon deck is prepared for a future 5x2, 10-ally team layout with restart outside the deck | Complete |
+| Ally sprite presentation | All four `UNIT_TYPES` entries use real-alpha local PNGs (`ally-neko-v2.png`, `ally-tank-neko-v2.png`, `ally-battle-neko-v2.png`, and `ally-ashinaga-umi-neko-v3.png`); the summon deck uses a dark navy surface and is prepared for a future 5x2, 10-ally team layout with restart outside the deck | Complete |
 | Stage 3 locked preview | `forest-preview-01`, `森編`, `もりもり迷いのこみちは準備中`, `assets/base-enemy-stage-3-forest-castle.png` | Complete |
 | Stage 4 locked preview | `ghost-night-preview-01`, `おばけ屋敷編`, `ふわふわおばけの夜道は準備中`, `assets/base-enemy-stage-4-ghost-castle.png` | Complete |
 | Shared ally base art | `assets/base-ally-blue-castle-v2.png` through `GAME_ASSETS.bases.ally` | Complete |

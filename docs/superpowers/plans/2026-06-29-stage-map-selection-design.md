@@ -1,5 +1,7 @@
 # Stage Map Selection Design Implementation Plan
 
+> Status note, 2026-07-14: this implementation plan is historical and has already been completed. The current stage-map state and Stage 2 playable readiness boundary are maintained in `docs/superpowers/specs/2026-06-29-stage-map-selection-design.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Document the stage-map and stage-selection boundary so the next gameplay UI pass can add a visible stage path safely.

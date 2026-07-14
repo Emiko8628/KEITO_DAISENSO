@@ -1,5 +1,7 @@
 # Stage Map Screen Implementation Plan
 
+> Status note, 2026-07-14: this implementation plan is historical and has already been completed. The current stage-map state has Stage 1 playable and Stage 2〜4 locked previews. Use `docs/superpowers/specs/2026-06-29-stage-map-selection-design.md` as the current source for the next Stage 2 playable boundary.
+
 ## Goal
 
 Add the first playable stage-map screen before the battle view while keeping the existing single-page GitHub Pages URL and battle source of truth unchanged.

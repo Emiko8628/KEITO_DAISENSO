@@ -24,7 +24,7 @@ const requiredAllySprites = [
   { name: "まるねこ", file: "assets/ally-neko.png", assetRef: "GAME_ASSETS.allies.neko", buttonId: "spawnNeko", buttonText: "まるねこ 50" },
   { name: "かたいねこ", file: "assets/ally-tank-neko.png", assetRef: "GAME_ASSETS.allies.tank", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
   { name: "こうげきねこ", file: "assets/ally-battle-neko.png", assetRef: "GAME_ASSETS.allies.battle", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" },
-  { name: "あしながうみネコ", file: "assets/ally-ashinaga-umi-neko.png", assetRef: "GAME_ASSETS.allies.ashinaga", buttonId: "spawnAshinaga", buttonText: "あしながうみネコ 140" }
+  { name: "あしながうみネコ", file: "assets/ally-ashinaga-umi-neko-v3.png", assetRef: "GAME_ASSETS.allies.ashinaga", buttonId: "spawnAshinaga", buttonText: "あしながうみネコ 140" }
 ];
 const requiredStageBackgrounds = [
   {
@@ -59,6 +59,13 @@ function contains(source, expected, label) {
     source.includes(expected),
     `${label} must include: ${expected}`
   );
+}
+
+function pngHasAlpha(file) {
+  const png = fs.readFileSync(file);
+  assert.strictEqual(png.toString("ascii", 1, 4), "PNG", `${file} must be a PNG file`);
+  assert.strictEqual(png.toString("ascii", 12, 16), "IHDR", `${file} must include a PNG IHDR chunk`);
+  return png[25] === 4 || png[25] === 6;
 }
 
 function functionSection(name, nextName) {
@@ -411,6 +418,15 @@ for (const sprite of requiredAllySprites) {
   contains(html, `id="${sprite.buttonId}"`, `${sprite.name} summon button id`);
   contains(html, `>${sprite.buttonText}</button>`, `${sprite.name} summon button text`);
 }
+
+assert(
+  pngHasAlpha("assets/ally-ashinaga-umi-neko-v3.png"),
+  "あしながうみネコ sprite must contain a real alpha channel"
+);
+assert(
+  !fs.existsSync("assets/ally-ashinaga-umi-neko.png"),
+  "cached opaque あしながうみネコ sprite must stay removed"
+);
 
 contains(
   script,

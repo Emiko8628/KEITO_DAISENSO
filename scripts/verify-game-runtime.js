@@ -328,8 +328,8 @@ assert.deepStrictEqual(
   JSON.parse(JSON.stringify(stage2Sandbox.__keitoRuntimeProbe.getEnemyTypes().beachPyoko)),
   {
     label: "うみぴょこネコ",
-    hp: 44,
-    attack: 8,
+    hp: 50,
+    attack: 9,
     range: 30,
     speed: 0.53,
     cooldown: 60,
@@ -339,14 +339,14 @@ assert.deepStrictEqual(
     spriteWidth: 58,
     spriteHeight: 44
   },
-  "stage 2 should define a slightly stronger pyoko variant with its dedicated sprite"
+  "stage 2 should define a stronger pyoko variant with its dedicated sprite"
 );
 assert.deepStrictEqual(
   JSON.parse(JSON.stringify(stage2Sandbox.__keitoRuntimeProbe.getEnemyTypes().beachAshinaga)),
   {
     label: "あしながうみネコ",
-    hp: 82,
-    attack: 18,
+    hp: 92,
+    attack: 20,
     range: 44,
     speed: 0.42,
     cooldown: 74,

@@ -836,8 +836,8 @@ button:disabled {
   const ENEMY_TYPES = {
     pyoko: {
       label: "ぴょこネコ",
-      hp: 38,
-      attack: 7,
+      hp: 42,
+      attack: 8,
       range: 30,
       speed: 0.5,
       cooldown: 62,
@@ -849,8 +849,8 @@ button:disabled {
     },
     nyoro: {
       label: "にょろゴースト",
-      hp: 76,
-      attack: 11,
+      hp: 84,
+      attack: 12,
       range: 34,
       speed: 0.28,
       cooldown: 78,
@@ -862,8 +862,8 @@ button:disabled {
     },
     trio: {
       label: "わちゃわちゃトリオ",
-      hp: 58,
-      attack: 13,
+      hp: 64,
+      attack: 15,
       range: 36,
       speed: 0.36,
       cooldown: 72,
@@ -875,8 +875,8 @@ button:disabled {
     },
     beachPyoko: {
       label: "うみぴょこネコ",
-      hp: 44,
-      attack: 8,
+      hp: 50,
+      attack: 9,
       range: 30,
       speed: 0.53,
       cooldown: 60,
@@ -888,8 +888,8 @@ button:disabled {
     },
     beachNyoro: {
       label: "しおかぜゴースト",
-      hp: 88,
-      attack: 12,
+      hp: 96,
+      attack: 14,
       range: 34,
       speed: 0.3,
       cooldown: 76,
@@ -901,8 +901,8 @@ button:disabled {
     },
     beachTrio: {
       label: "なみのりトリオ",
-      hp: 66,
-      attack: 15,
+      hp: 74,
+      attack: 17,
       range: 36,
       speed: 0.38,
       cooldown: 70,
@@ -914,8 +914,8 @@ button:disabled {
     },
     beachAshinaga: {
       label: "あしながうみネコ",
-      hp: 82,
-      attack: 18,
+      hp: 92,
+      attack: 20,
       range: 44,
       speed: 0.42,
       cooldown: 74,
@@ -1431,11 +1431,9 @@ button:disabled {
       const previousHp = state.enemyBaseHp;
       state.enemyBaseHp = Math.max(0, state.enemyBaseHp - actor.attack);
       const damage = previousHp - state.enemyBaseHp;
-      addEffect("baseHit", baseX, GROUND_Y - 78, "#ffd166", "ally");
       addExperience(Math.ceil(damage * currentStage().baseHitExperienceRate), baseX, GROUND_Y - 104);
     } else {
       state.allyBaseHp = Math.max(0, state.allyBaseHp - actor.attack);
-      addEffect("baseHit", baseX, GROUND_Y - 78, "#ff8787", "enemy");
     }
     actor.cooldown = actor.cooldownMax;
     return true;
@@ -1451,8 +1449,6 @@ button:disabled {
         target.hp -= actor.attack;
         target.hitFlash = 8;
         actor.cooldown = actor.cooldownMax;
-        addEffect(actor.team === "ally" ? "slash" : "impact", target.x, target.y - target.height * 0.5, actor.team === "ally" ? "#ffd166" : "#ff8787", actor.team);
-        addEffect("spark", target.x, target.y - target.height * 0.55, actor.team === "ally" ? "#66d9ef" : "#ffb3b3", actor.team);
       }
       return;
     }
@@ -1499,7 +1495,6 @@ button:disabled {
       state.money += enemy.reward;
       state.defeats += 1;
       addExperience(experience, enemy.x, enemy.y - 72);
-      addEffect("impact", enemy.x, enemy.y - enemy.height * 0.55, "#ffd166", "ally");
       return false;
     });
 
@@ -1830,17 +1825,7 @@ button:disabled {
       ctx.lineWidth = 3;
       ctx.translate(effect.x, effect.y);
 
-      if (effect.type === "slash") {
-        ctx.rotate(-0.55);
-        ctx.beginPath();
-        ctx.moveTo(-16 - progress * 8, 0);
-        ctx.lineTo(18 + progress * 10, -8);
-        ctx.stroke();
-      } else if (effect.type === "impact") {
-        ctx.beginPath();
-        ctx.arc(0, 0, 8 + progress * 18, 0, Math.PI * 2);
-        ctx.stroke();
-      } else if (effect.type === "spark") {
+      if (effect.type === "spark") {
         for (let i = 0; i < 5; i += 1) {
           const angle = effect.angle + i * (Math.PI * 2 / 5);
           ctx.beginPath();
@@ -1848,10 +1833,6 @@ button:disabled {
           ctx.lineTo(Math.cos(angle) * (13 + progress * 10), Math.sin(angle) * (13 + progress * 10));
           ctx.stroke();
         }
-      } else if (effect.type === "baseHit") {
-        ctx.beginPath();
-        ctx.arc(0, 0, 16 + progress * 26, 0, Math.PI * 2);
-        ctx.stroke();
       } else if (effect.type === "clearBurst") {
         for (let i = 0; i < 12; i += 1) {
           const angle = effect.angle + i * (Math.PI * 2 / 12);

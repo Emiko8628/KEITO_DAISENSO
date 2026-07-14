@@ -25,7 +25,7 @@ This spec records the current stage-map state after making Stage 2 `ざぶざぶ
 | Stage map visual surface | `stageMap`, `battleView`, `renderStageMap()`, `showStageMap()`, `showBattleView()` in `game.html` | Complete |
 | Stage 1 playable node | `earth-wanwan-01` in `STAGE_MAP` with `status: "playable"` and `stageIndex: 0` | Complete |
 | Stage 2 playable node | `beach-defense-01` in `STAGE_MAP` with `status: "playable"`, `stageIndex: 1`, and `assets/base-enemy-stage-2-beach-castle.png` | Complete |
-| Stage 2 enemy variants | `beachPyoko`, `beachNyoro`, `beachTrio`, and `beachAshinaga` in `ENEMY_TYPES`, using dedicated local sprites with slightly stronger stats | Complete |
+| Stage 2 enemy variants | `beachPyoko`, `beachNyoro`, `beachTrio`, and `beachAshinaga` in `ENEMY_TYPES`, using dedicated local sprites with stronger stats | Complete |
 | Stage 3 locked preview | `forest-preview-01`, `森編`, `もりもり迷いのこみちは準備中`, `assets/base-enemy-stage-3-forest-castle.png` | Complete |
 | Stage 4 locked preview | `ghost-night-preview-01`, `おばけ屋敷編`, `ふわふわおばけの夜道は準備中`, `assets/base-enemy-stage-4-ghost-castle.png` | Complete |
 | Shared ally base art | `assets/base-ally-blue-castle-v2.png` through `GAME_ASSETS.bases.ally` | Complete |
@@ -137,7 +137,7 @@ Implemented data:
 - Use enemy base sprite `GAME_ASSETS.bases.enemyStage2`.
 - Keep the existing three ally unit types.
 - Keep the existing three Stage 1 enemy types.
-- Add Stage 2 enemy variants with readable roles, dedicated local sprite art, and slightly stronger stats.
+- Add Stage 2 enemy variants with readable roles, dedicated local sprite art, and stronger stats.
 - Keep no save data.
 
 Recommended Stage 2 balance:
@@ -237,7 +237,8 @@ The Stage 2 playable PR verifies:
 - Stage 2 target experience is `120`.
 - Stage 2 clear bonus is `150`.
 - Stage 2 uses beach enemy variants `beachPyoko`, `beachNyoro`, `beachTrio`, and `beachAshinaga`.
-- Stage 2 enemy spawn weights are `55 / 30 / 15`.
+- Ordinary hit shockwave effects stay hidden; battle damage remains internal and only base HP numbers are shown.
+- Stage 2 enemy spawn weights are `50 / 27 / 15 / 8`.
 - Restart restarts the selected playable stage.
 - Stage 3 and Stage 4 remain locked.
 - Existing analytics event names remain `game_open`, `first_summon`, and `stage_clear`.

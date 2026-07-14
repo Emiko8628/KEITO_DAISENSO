@@ -74,12 +74,14 @@ const allyBaseX = numberConstant("ALLY_BASE_X");
 const enemyBaseX = numberConstant("ENEMY_BASE_X");
 const attackBaseSection = functionSection("attackBase", "updateFighter");
 const updateFighterSection = functionSection("updateFighter", "addEffect");
+const removeDefeatedSection = functionSection("removeDefeated", "updateGame");
 const checkResultSection = functionSection("checkResult", "updateUI");
 const updateUISection = functionSection("updateUI", "drawBackground");
 const drawBaseSection = functionSection("drawBase", "drawBaseStructure");
 const drawBaseImageSection = functionSection("drawBaseImage", "drawCanvasBaseStructure");
 const drawCanvasBaseStructureSection = functionSection("drawCanvasBaseStructure", "drawFighter");
 const drawFighterSection = functionSection("drawFighter", "drawFighterShadow");
+const drawEffectsSection = functionSection("drawEffects", "drawStageIntro");
 
 assert(
   allyBaseX > enemyBaseX,
@@ -262,6 +264,22 @@ contains(
   'label: "あしながうみネコ"',
   "second stage ashinaga variant label"
 );
+
+[
+  ["ぴょこネコ", "hp: 42", "attack: 8"],
+  ["にょろゴースト", "hp: 84", "attack: 12"],
+  ["わちゃわちゃトリオ", "hp: 64", "attack: 15"],
+  ["うみぴょこネコ", "hp: 50", "attack: 9"],
+  ["しおかぜゴースト", "hp: 96", "attack: 14"],
+  ["なみのりトリオ", "hp: 74", "attack: 17"],
+  ["あしながうみネコ", "hp: 92", "attack: 20"]
+].forEach(([label, hp, attack]) => {
+  const labelIndex = script.indexOf(`label: "${label}"`);
+  assert(labelIndex >= 0, `${label} enemy label must exist`);
+  const enemyBlock = script.slice(labelIndex, script.indexOf("}", labelIndex));
+  contains(enemyBlock, hp, `${label} tuned HP`);
+  contains(enemyBlock, attack, `${label} tuned attack`);
+});
 
 contains(
   script,
@@ -976,6 +994,20 @@ assert(
   !attackBaseSection.includes("`-${actor.attack}`") &&
     !updateFighterSection.includes("`-${actor.attack}`"),
   "attack damage numbers should not be rendered as floating text"
+);
+
+assert(
+  !attackBaseSection.includes("addEffect(") &&
+    !updateFighterSection.includes("addEffect(") &&
+    !removeDefeatedSection.includes("addEffect("),
+  "ordinary attack, base-hit, and defeated-enemy impact effects should stay hidden"
+);
+
+assert(
+  !drawEffectsSection.includes('effect.type === "slash"') &&
+    !drawEffectsSection.includes('effect.type === "impact"') &&
+    !drawEffectsSection.includes('effect.type === "baseHit"'),
+  "hit shockwave effect drawing branches should be removed"
 );
 
 assert(

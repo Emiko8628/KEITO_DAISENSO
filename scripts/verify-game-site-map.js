@@ -62,6 +62,20 @@ assert(
 );
 
 assert(
+  readme.includes("Stage 2: `海辺編 / ざぶざぶビーチ防衛戦`") &&
+    readme.includes("Stage 3: `森編 / もりもり迷いのこみち`") &&
+    readme.includes("Stage 4: `おばけ屋敷編 / ふわふわおばけの夜道`"),
+  "README must document the current Stage 2-4 preview plan"
+);
+
+assert(
+  siteMap.includes("Stage 2 playable") &&
+    siteMap.includes("GAME_ASSETS.backgrounds.beach") &&
+    siteMap.includes("Stage 3 `もりもり迷いのこみち` and Stage 4 `ふわふわおばけの夜道` locked"),
+  "site map must document the next Stage 2 playable boundary"
+);
+
+assert(
   siteMap.includes("Public URL remains `https://emiko8628.github.io/KEITO_DAISENSO/game.html`"),
   "site map must preserve the current public URL boundary"
 );

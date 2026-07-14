@@ -50,19 +50,24 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 
 ## Next Improvement Queue
 
-1. **Game data extraction**
+1. **Stage 2 playable**
+   - Make `海辺編 / ざぶざぶビーチ防衛戦` playable by adding `assets/stage-beach-background.png`, `GAME_ASSETS.backgrounds.beach`, and `STAGES[1]`.
+   - Keep Stage 3 `もりもり迷いのこみち` and Stage 4 `ふわふわおばけの夜道` locked.
+   - Keep existing GA event names, Cloudflare Worker behavior, public URL, and storage-free privacy boundary.
+
+2. **Game data extraction**
    - Move stage, unit, enemy, and asset definitions out of the large inline script only when a concrete next feature needs it.
    - Keep `game.html` working directly from GitHub Pages.
 
-2. **Player-facing top page**
+3. **Player-facing top page**
    - Consider turning `index.html` from immediate redirect into a small start screen with `ゲームを始める`, `このゲームについて`, and privacy notes.
    - Do this only after the game map is stable enough that the top page will not become marketing noise.
 
-3. **Search-engine sitemap**
+4. **Search-engine sitemap**
    - Add `sitemap.xml` only after there are multiple stable public pages worth indexing.
    - Current priority is lower because `game.html` is still the primary public surface.
 
-4. **Regression screenshots**
+5. **Regression screenshots**
    - Add an automated screenshot workflow if visual changes become frequent.
    - For now, local Chrome screenshots remain the manual visual gate for UI changes.
 

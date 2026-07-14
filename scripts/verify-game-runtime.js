@@ -97,6 +97,7 @@ const ids = [
   "spawnNeko",
   "spawnTank",
   "spawnBattle",
+  "spawnAshinaga",
   "restart"
 ];
 
@@ -268,6 +269,7 @@ const scriptWithProbe = scriptMatch[1].replace(
     "    addExperience,",
     "    checkResult,",
     "    getStageMap: () => STAGE_MAP,",
+    "    getUnitTypes: () => UNIT_TYPES,",
     "    getEnemyTypes: () => ENEMY_TYPES,",
     "    getSelectedStageIndex: () => selectedStageIndex,",
     "    isBattleActive: () => battleActive,",
@@ -342,21 +344,28 @@ assert.deepStrictEqual(
   "stage 2 should define a stronger pyoko variant with its dedicated sprite"
 );
 assert.deepStrictEqual(
-  JSON.parse(JSON.stringify(stage2Sandbox.__keitoRuntimeProbe.getEnemyTypes().beachAshinaga)),
+  JSON.parse(JSON.stringify(stage2Sandbox.__keitoRuntimeProbe.getUnitTypes().ashinaga)),
   {
     label: "あしながうみネコ",
-    hp: 92,
-    attack: 20,
-    range: 44,
-    speed: 0.42,
-    cooldown: 74,
-    reward: 48,
-    color: "#74c0fc",
-    sprite: "assets/enemy-beach-ashinaga-neko.png",
-    spriteWidth: 44,
-    spriteHeight: 92
+    cost: 140,
+    hp: 120,
+    attack: 30,
+    range: 58,
+    speed: 0.46,
+    cooldown: 62,
+    summonCooldownMs: 3600,
+    rewardOnWin: 0,
+    color: "#a5d8ff",
+    sprite: "assets/ally-ashinaga-umi-neko.png",
+    spriteWidth: 46,
+    spriteHeight: 98
   },
-  "stage 2 should define the fourth beach enemy variant"
+  "あしながうみネコ should be an ally unit, not a Stage 2 enemy"
+);
+assert.strictEqual(
+  stage2Sandbox.__keitoRuntimeProbe.getEnemyTypes().beachAshinaga,
+  undefined,
+  "あしながうみネコ should not remain in enemy types"
 );
 assert.match(
   stage2Elements.get("message").innerHTML,
@@ -422,11 +431,36 @@ assert.strictEqual(
   'url("assets/ally-battle-neko.png")',
   "こうげきねこ summon button should display its unit sprite"
 );
+assert.strictEqual(
+  elements.get("spawnAshinaga").style.values["--summon-icon"],
+  'url("assets/ally-ashinaga-umi-neko.png")',
+  "あしながうみネコ summon button should display its unit sprite"
+);
+assert.strictEqual(elements.get("spawnAshinaga").textContent, "あしながうみネコ 140");
+assert.strictEqual(elements.get("spawnAshinaga").disabled, false);
 assert.match(
   elements.get("message").innerHTML,
   /左の敵拠点/,
   "opening message should teach enemy-base destruction as the goal"
 );
+
+const {
+  elements: ashinagaElements,
+  sandbox: ashinagaSandbox
+} = createRuntime(scriptWithProbe);
+ashinagaElements.get("startStage0").click();
+ashinagaElements.get("spawnAshinaga").click();
+assert.strictEqual(ashinagaElements.get("money").textContent, "40", "summoning あしながうみネコ should spend 140");
+assert.match(
+  ashinagaElements.get("message").innerHTML,
+  /あしながうみネコを召喚した/,
+  "あしながうみネコ should summon from the ally deck"
+);
+assert.strictEqual(ashinagaElements.get("spawnAshinaga").disabled, true, "あしながうみネコ should enter cooldown after summon");
+{
+  const units = ashinagaSandbox.__keitoRuntimeProbe.getState().units;
+  assert.strictEqual(units[units.length - 1].kind, "ashinaga", "あしながうみネコ summon should create an ally unit");
+}
 
 elements.get("spawnNeko").click();
 assert.strictEqual(elements.get("money").textContent, "130", "summoning まるねこ should spend 50");

@@ -18,12 +18,12 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 | --- | --- | --- |
 | Stage data | `STAGES` in `game.html` | Stage 1 and Stage 2 are playable. Stage 3〜4 base images are prepared as local locked-preview assets, but battle data is not expanded yet. |
 | Stage map | `STAGE_MAP` in `game.html` | Shows Stage 1 and Stage 2 as playable, and Stage 3〜4 as locked previews. Design basis: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md). |
-| Ally unit data | `UNIT_TYPES` in `game.html` | Three summon buttons: `まるねこ 50`, `かたいねこ 80`, `こうげきねこ 110`. |
-| Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | Stage 1 keeps the approved easy-readable enemy mix with slightly stronger enemy stats. Stage 2 uses four named enemy variants with dedicated local sprites and stronger stats. |
+| Ally unit data | `UNIT_TYPES` in `game.html` | Four current summon buttons: `まるねこ 50`, `かたいねこ 80`, `こうげきねこ 110`, `あしながうみネコ 140`. The deck is prepared as a 5-column, 2-row team area for a future 10-ally roster. |
+| Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | Stage 1 keeps the approved easy-readable enemy mix with slightly stronger enemy stats. Stage 2 uses three named beach enemy variants with dedicated local sprites and stronger stats. |
 | Battle state | `state` in `game.html` | Money, base HP, EXP, defeats, units, enemies, effects, cooldowns, and result state are in memory only. |
 | Win condition | `checkResult()` in `game.html` | Destroying the left enemy base clears the selected stage. EXP reaching the stage target is only a progress notice, not a clear condition. |
 | Display rendering | Canvas drawing functions in `game.html` | Castle HP appears as `current / max` above bases. Character HP bars, battle floating numbers, and ordinary hit shockwave effects are intentionally hidden. |
-| Summon controls | `.summon-deck` buttons in `game.html` | Buttons show each ally unit image, unit name, cost, and cooldown progress in the button bar. |
+| Summon controls | `.battle-controls`, `.summon-deck`, and `.command-row` in `game.html` | The summon deck shows ally unit image, unit name, cost, and cooldown progress. Restart is kept in a separate command row so the ally deck can expand toward 10 team slots. |
 | Analytics | `ANALYTICS_CONFIG` and tracking helpers in `game.html` | Google Analytics sends only allowed game events and safe string properties. |
 | Live audience | `LIVE_AUDIENCE_CONFIG` in `game.html` plus Worker | Sends only an anonymous page-scoped temporary session signal to the Worker. |
 | Visual assets | `GAME_ASSETS` in `game.html` plus `assets/` | Character, base, and background paths are centralized before use. Canvas fallback rendering remains for brittle image loading paths. |

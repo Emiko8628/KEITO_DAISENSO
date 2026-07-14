@@ -240,7 +240,7 @@ The Stage 2 playable PR verifies:
 - Ordinary hit shockwave effects stay hidden; battle damage remains internal and only base HP numbers are shown.
 - Ordinary hit flash effects stay hidden; battle damage remains internal.
 - Stage 2 enemy spawn weights are `55 / 30 / 15`.
-- The summon deck remains a 5-column, 2-row-ready ally team area, and restart remains outside that deck.
+- The summon deck remains a 5-column, 2-row-ready ally team area, and the compact restart action remains outside that deck, immediately left of the live audience display in the HUD.
 - Restart restarts the selected playable stage.
 - Stage 3 and Stage 4 remain locked.
 - Existing analytics event names remain `game_open`, `first_summon`, and `stage_clear`.

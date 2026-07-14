@@ -1170,15 +1170,28 @@ contains(
 
 contains(
   html,
-  'class="command-row"',
-  "restart command row"
+  'class="hud-actions"',
+  "compact HUD action group"
 );
 
 contains(
   html,
-  'aria-label="バトル操作"',
-  "command row accessibility label"
+  'aria-label="バトル操作と現在の参戦人数"',
+  "HUD action group accessibility label"
 );
+
+contains(
+  html,
+  'id="restart" class="restart-button" type="button" aria-label="ステージをリスタート">↻ リスタート</button>',
+  "compact restart action"
+);
+
+assert(
+  html.indexOf('id="restart" class="restart-button"') < html.indexOf('class="audience-line"'),
+  "restart action must appear immediately before the live audience display"
+);
+
+assert(!html.includes('class="command-row"'), "restart must not consume a row in the ally summon deck");
 
 contains(
   html,

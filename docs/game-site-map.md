@@ -23,7 +23,7 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 | Battle state | `state` in `game.html` | Money, base HP, EXP, defeats, units, enemies, effects, cooldowns, and result state are in memory only. |
 | Win condition | `checkResult()` in `game.html` | Destroying the left enemy base clears the selected stage. EXP reaching the stage target is only a progress notice, not a clear condition. |
 | Display rendering | Canvas drawing functions in `game.html` | Castle HP appears as `current / max` above bases. Character HP bars, battle floating numbers, and ordinary hit shockwave effects are intentionally hidden. |
-| Summon controls | `.battle-controls`, `.summon-deck`, and `.command-row` in `game.html` | The summon deck shows ally unit image, unit name, cost, and cooldown progress. Restart is kept in a separate command row so the ally deck can expand toward 10 team slots. |
+| Summon controls | `.battle-controls` and `.summon-deck` in `game.html` | The summon deck shows ally unit image, unit name, cost, and cooldown progress, with room for 10 team slots. Restart is a compact HUD action immediately left of the live audience display. |
 | Analytics | `ANALYTICS_CONFIG` and tracking helpers in `game.html` | Google Analytics sends only allowed game events and safe string properties. |
 | Live audience | `LIVE_AUDIENCE_CONFIG` in `game.html` plus Worker | Sends only an anonymous page-scoped temporary session signal to the Worker. |
 | Visual assets | `GAME_ASSETS` in `game.html` plus `assets/` | Character, base, and background paths are centralized before use. Canvas fallback rendering remains for brittle image loading paths. |

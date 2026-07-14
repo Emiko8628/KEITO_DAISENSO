@@ -293,7 +293,6 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 7px;
   padding: 4px 8px;
   border: 1px solid rgba(102, 217, 239, 0.36);
   border-radius: 4px;
@@ -302,6 +301,14 @@ h1 {
   font-size: 12px;
   font-weight: 900;
   line-height: 1;
+}
+
+.hud-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
 }
 
 .audience-line strong {
@@ -343,12 +350,6 @@ canvas {
   grid-auto-rows: minmax(72px, auto);
   gap: 10px;
   padding: 12px 14px 8px;
-}
-
-.command-row {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 14px 12px;
 }
 
 button {
@@ -411,11 +412,20 @@ button:disabled {
   pointer-events: none;
 }
 
-.command-card {
-  width: min(220px, 100%);
-  min-height: 48px;
-  background:
-    linear-gradient(180deg, rgba(102, 217, 239, 0.42) 0%, rgba(102, 217, 239, 0.1) 42%, #202737 43%, #151a24 100%);
+.restart-button {
+  min-height: 0;
+  border: 1px solid rgba(246, 247, 251, 0.42);
+  padding: 5px 8px;
+  background: rgba(10, 15, 23, 0.72);
+  color: #f6f7fb;
+  font-size: 11px;
+  line-height: 1;
+  box-shadow: none;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.restart-button::after {
+  display: none;
 }
 
 .message {
@@ -454,16 +464,13 @@ button:disabled {
   .compact-stats {
     justify-content: flex-start;
   }
+  .hud-actions {
+    justify-content: flex-start;
+  }
   .summon-deck {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     padding: 10px 10px 8px;
-  }
-  .command-row {
-    padding: 0 10px 10px;
-  }
-  .command-card {
-    width: 100%;
   }
   button {
     min-height: 60px;
@@ -582,9 +589,12 @@ button:disabled {
           <div class="compact-stats">
             <span>撃破 <strong id="defeats">0</strong></span>
           </div>
-          <div class="audience-line" aria-label="現在の参戦人数">
-            <span class="audience-pulse" aria-hidden="true"></span>
-            <span>参戦中 <strong id="viewerCount">--</strong></span>
+          <div class="hud-actions" aria-label="バトル操作と現在の参戦人数">
+            <button id="restart" class="restart-button" type="button" aria-label="ステージをリスタート">↻ リスタート</button>
+            <div class="audience-line" aria-label="現在の参戦人数">
+              <span class="audience-pulse" aria-hidden="true"></span>
+              <span>参戦中 <strong id="viewerCount">--</strong></span>
+            </div>
           </div>
         </div>
       </div>
@@ -595,9 +605,6 @@ button:disabled {
           <button id="spawnTank" class="summon-card">かたいねこ 80</button>
           <button id="spawnBattle" class="summon-card">こうげきねこ 110</button>
           <button id="spawnAshinaga" class="summon-card">あしながうみネコ 140</button>
-        </div>
-        <div class="command-row" aria-label="バトル操作">
-          <button id="restart" class="command-card">リスタート</button>
         </div>
       </div>
       <div class="message" id="message">

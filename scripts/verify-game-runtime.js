@@ -335,11 +335,28 @@ assert.deepStrictEqual(
     cooldown: 60,
     reward: 27,
     color: "#ff8787",
-    sprite: "assets/enemy-pyoko-neko.png",
+    sprite: "assets/enemy-beach-pyoko-neko.png",
     spriteWidth: 58,
     spriteHeight: 44
   },
-  "stage 2 should define a slightly stronger pyoko variant without recoloring the sprite"
+  "stage 2 should define a slightly stronger pyoko variant with its dedicated sprite"
+);
+assert.deepStrictEqual(
+  JSON.parse(JSON.stringify(stage2Sandbox.__keitoRuntimeProbe.getEnemyTypes().beachAshinaga)),
+  {
+    label: "あしながうみネコ",
+    hp: 82,
+    attack: 18,
+    range: 44,
+    speed: 0.42,
+    cooldown: 74,
+    reward: 48,
+    color: "#74c0fc",
+    sprite: "assets/enemy-beach-ashinaga-neko.png",
+    spriteWidth: 44,
+    spriteHeight: 92
+  },
+  "stage 2 should define the fourth beach enemy variant"
 );
 assert.match(
   stage2Elements.get("message").innerHTML,
@@ -390,6 +407,21 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(elements.get("experience").textContent, "0 / 100");
 assert.strictEqual(elements.get("spawnNeko").disabled, false);
+assert.strictEqual(
+  elements.get("spawnNeko").style.values["--summon-icon"],
+  'url("assets/ally-neko.png")',
+  "まるねこ summon button should display its unit sprite"
+);
+assert.strictEqual(
+  elements.get("spawnTank").style.values["--summon-icon"],
+  'url("assets/ally-tank-neko.png")',
+  "かたいねこ summon button should display its unit sprite"
+);
+assert.strictEqual(
+  elements.get("spawnBattle").style.values["--summon-icon"],
+  'url("assets/ally-battle-neko.png")',
+  "こうげきねこ summon button should display its unit sprite"
+);
 assert.match(
   elements.get("message").innerHTML,
   /左の敵拠点/,

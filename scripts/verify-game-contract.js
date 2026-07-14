@@ -15,6 +15,12 @@ const requiredEnemySprites = [
   { name: "にょろゴースト", file: "assets/enemy-nyoro-ghost.png", assetRef: "GAME_ASSETS.enemies.nyoro" },
   { name: "わちゃわちゃトリオ", file: "assets/enemy-wachawacha-trio.png", assetRef: "GAME_ASSETS.enemies.trio" }
 ];
+const requiredBeachEnemySprites = [
+  { name: "うみぴょこネコ", file: "assets/enemy-beach-pyoko-neko.png", assetRef: "GAME_ASSETS.enemies.beachPyoko" },
+  { name: "しおかぜゴースト", file: "assets/enemy-beach-nyoro-ghost.png", assetRef: "GAME_ASSETS.enemies.beachNyoro" },
+  { name: "なみのりトリオ", file: "assets/enemy-beach-wachawacha-trio.png", assetRef: "GAME_ASSETS.enemies.beachTrio" },
+  { name: "あしながうみネコ", file: "assets/enemy-beach-ashinaga-neko.png", assetRef: "GAME_ASSETS.enemies.beachAshinaga" }
+];
 const requiredAllySprites = [
   { name: "まるねこ", file: "assets/ally-neko.png", assetRef: "GAME_ASSETS.allies.neko", buttonId: "spawnNeko", buttonText: "まるねこ 50" },
   { name: "かたいねこ", file: "assets/ally-tank-neko.png", assetRef: "GAME_ASSETS.allies.tank", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
@@ -253,6 +259,30 @@ contains(
 
 contains(
   script,
+  'label: "あしながうみネコ"',
+  "second stage ashinaga variant label"
+);
+
+contains(
+  script,
+  'pyoko: 18',
+  "first stage pyoko experience"
+);
+
+contains(
+  script,
+  'nyoro: 30',
+  "first stage nyoro experience"
+);
+
+contains(
+  script,
+  'trio: 26',
+  "first stage trio experience"
+);
+
+contains(
+  script,
   'beachPyoko: 20',
   "second stage pyoko variant experience"
 );
@@ -271,13 +301,19 @@ contains(
 
 contains(
   script,
-  '{ kind: "beachPyoko", weight: 55 }',
+  'beachAshinaga: 36',
+  "second stage ashinaga variant experience"
+);
+
+contains(
+  script,
+  '{ kind: "beachPyoko", weight: 50 }',
   "second stage pyoko variant spawn weight"
 );
 
 contains(
   script,
-  '{ kind: "beachNyoro", weight: 30 }',
+  '{ kind: "beachNyoro", weight: 27 }',
   "second stage nyoro variant spawn weight"
 );
 
@@ -285,6 +321,12 @@ contains(
   script,
   '{ kind: "beachTrio", weight: 15 }',
   "second stage trio variant spawn weight"
+);
+
+contains(
+  script,
+  '{ kind: "beachAshinaga", weight: 8 }',
+  "second stage ashinaga variant spawn weight"
 );
 
 assert(
@@ -323,6 +365,16 @@ for (const sprite of requiredEnemySprites) {
   );
   contains(script, `label: "${sprite.name}"`, `${sprite.name} enemy label`);
   contains(script, `sprite: ${sprite.assetRef}`, `${sprite.name} enemy sprite`);
+}
+
+for (const sprite of requiredBeachEnemySprites) {
+  assert(
+    fs.existsSync(sprite.file),
+    `missing beach enemy sprite asset: ${sprite.file}`
+  );
+  contains(script, sprite.file, `${sprite.name} beach enemy sprite asset`);
+  contains(script, `label: "${sprite.name}"`, `${sprite.name} beach enemy label`);
+  contains(script, `sprite: ${sprite.assetRef}`, `${sprite.name} beach enemy sprite`);
 }
 
 for (const sprite of requiredAllySprites) {
@@ -1050,6 +1102,30 @@ contains(
   html,
   'class="summon-card"',
   "summon card controls"
+);
+
+contains(
+  html,
+  ".summon-card::before",
+  "summon card sprite pseudo element"
+);
+
+contains(
+  html,
+  "background-image: var(--summon-icon)",
+  "summon card sprite style"
+);
+
+contains(
+  script,
+  "function updateSummonButton",
+  "summon card sprite and label updater"
+);
+
+contains(
+  script,
+  "button.style.setProperty(\"--summon-icon\", `url(\"${type.sprite}\")`)",
+  "summon card should use UNIT_TYPES sprite"
 );
 
 contains(

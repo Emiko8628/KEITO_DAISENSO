@@ -377,6 +377,30 @@ button:disabled {
   filter: grayscale(0.55) brightness(0.74);
 }
 
+.summon-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding-left: 66px;
+  text-align: left;
+}
+
+.summon-card::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  bottom: 18px;
+  width: 48px;
+  height: 48px;
+  background-image: var(--summon-icon);
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+
 .command-card {
   background:
     linear-gradient(180deg, rgba(102, 217, 239, 0.42) 0%, rgba(102, 217, 239, 0.1) 42%, #202737 43%, #151a24 100%);
@@ -427,6 +451,16 @@ button:disabled {
     min-height: 60px;
     padding: 8px 8px 20px;
     font-size: 14px;
+  }
+  .summon-card {
+    justify-content: flex-start;
+    padding-left: 54px;
+  }
+  .summon-card::before {
+    left: 8px;
+    bottom: 17px;
+    width: 40px;
+    height: 40px;
   }
   .stage-map {
     min-height: auto;
@@ -643,7 +677,11 @@ button:disabled {
     enemies: Object.freeze({
       pyoko: "assets/enemy-pyoko-neko.png",
       nyoro: "assets/enemy-nyoro-ghost.png",
-      trio: "assets/enemy-wachawacha-trio.png"
+      trio: "assets/enemy-wachawacha-trio.png",
+      beachPyoko: "assets/enemy-beach-pyoko-neko.png",
+      beachNyoro: "assets/enemy-beach-nyoro-ghost.png",
+      beachTrio: "assets/enemy-beach-wachawacha-trio.png",
+      beachAshinaga: "assets/enemy-beach-ashinaga-neko.png"
     })
   });
 
@@ -666,9 +704,9 @@ button:disabled {
       background: GAME_ASSETS.backgrounds.earthWanwan,
       enemyBaseSprite: GAME_ASSETS.bases.enemyStage1,
       enemyDefeatExperience: {
-        beachPyoko: 20,
-        beachNyoro: 32,
-        beachTrio: 28
+        pyoko: 18,
+        nyoro: 30,
+        trio: 26
       },
       baseHitExperienceRate: 1,
       enemySpawnFirstMs: 2600,
@@ -692,18 +730,20 @@ button:disabled {
       background: GAME_ASSETS.backgrounds.beach,
       enemyBaseSprite: GAME_ASSETS.bases.enemyStage2,
       enemyDefeatExperience: {
-        pyoko: 18,
-        nyoro: 30,
-        trio: 26
+        beachPyoko: 20,
+        beachNyoro: 32,
+        beachTrio: 28,
+        beachAshinaga: 36
       },
       baseHitExperienceRate: 1,
       enemySpawnFirstMs: 2300,
       enemySpawnBaseMs: 4700,
       enemySpawnMinMs: 3400,
       enemySpawnTable: [
-        { kind: "beachPyoko", weight: 55 },
-        { kind: "beachNyoro", weight: 30 },
-        { kind: "beachTrio", weight: 15 }
+        { kind: "beachPyoko", weight: 50 },
+        { kind: "beachNyoro", weight: 27 },
+        { kind: "beachTrio", weight: 15 },
+        { kind: "beachAshinaga", weight: 8 }
       ]
     }
   ];
@@ -842,7 +882,7 @@ button:disabled {
       cooldown: 60,
       reward: 27,
       color: "#ff8787",
-      sprite: GAME_ASSETS.enemies.pyoko,
+      sprite: GAME_ASSETS.enemies.beachPyoko,
       spriteWidth: 58,
       spriteHeight: 44
     },
@@ -855,9 +895,9 @@ button:disabled {
       cooldown: 76,
       reward: 46,
       color: "#f06595",
-      sprite: GAME_ASSETS.enemies.nyoro,
-      spriteWidth: 46,
-      spriteHeight: 74
+      sprite: GAME_ASSETS.enemies.beachNyoro,
+      spriteWidth: 52,
+      spriteHeight: 86
     },
     beachTrio: {
       label: "なみのりトリオ",
@@ -868,9 +908,22 @@ button:disabled {
       cooldown: 70,
       reward: 40,
       color: "#ffa8a8",
-      sprite: GAME_ASSETS.enemies.trio,
-      spriteWidth: 68,
-      spriteHeight: 54
+      sprite: GAME_ASSETS.enemies.beachTrio,
+      spriteWidth: 78,
+      spriteHeight: 58
+    },
+    beachAshinaga: {
+      label: "あしながうみネコ",
+      hp: 82,
+      attack: 18,
+      range: 44,
+      speed: 0.42,
+      cooldown: 74,
+      reward: 48,
+      color: "#74c0fc",
+      sprite: GAME_ASSETS.enemies.beachAshinaga,
+      spriteWidth: 44,
+      spriteHeight: 92
     }
   };
 
@@ -1529,13 +1582,18 @@ button:disabled {
     ui.message.innerHTML = state.gameOver
       ? `<strong>${state.message}</strong>`
       : state.message;
-    ui.spawnNeko.textContent = formatSummonLabel("neko");
-    ui.spawnTank.textContent = formatSummonLabel("tank");
-    ui.spawnBattle.textContent = formatSummonLabel("battle");
-    ui.spawnNeko.disabled = !canSummon("neko");
-    ui.spawnTank.disabled = !canSummon("tank");
-    ui.spawnBattle.disabled = !canSummon("battle");
+    updateSummonButton("neko", ui.spawnNeko);
+    updateSummonButton("tank", ui.spawnTank);
+    updateSummonButton("battle", ui.spawnBattle);
     updateCooldownBars();
+  }
+
+  function updateSummonButton(kind, button) {
+    const type = UNIT_TYPES[kind];
+    button.textContent = formatSummonLabel(kind);
+    button.setAttribute("aria-label", formatSummonLabel(kind));
+    button.style.setProperty("--summon-icon", `url("${type.sprite}")`);
+    button.disabled = !canSummon(kind);
   }
 
   function updateCooldownBars() {

@@ -466,7 +466,7 @@ button:disabled {
     <section class="stage-map" id="stageMap" aria-label="ステージマップ">
       <div class="stage-map-header">
         <h2 class="stage-map-title">ステージマップ</h2>
-        <p class="stage-map-status" id="stageMapStatus">1ステージ目を選んで開始できます。2〜4ステージ目は準備中です。</p>
+        <p class="stage-map-status" id="stageMapStatus">1〜2ステージ目を選んで開始できます。3〜4ステージ目は準備中です。</p>
       </div>
       <div class="stage-route" aria-label="ステージ一覧">
         <button id="startStage0" class="stage-node stage-node-playable" data-stage-map-index="0" data-stage-map-action="start">
@@ -480,15 +480,15 @@ button:disabled {
             <span class="stage-node-meta">最初の敵拠点をこわそう</span>
           </span>
         </button>
-        <button id="lockedStage1" class="stage-node stage-node-locked" data-stage-map-index="1" data-stage-map-action="locked">
-          <span class="stage-node-label">STAGE 2 <span class="stage-node-badge">準備中</span></span>
+        <button id="lockedStage1" class="stage-node stage-node-playable" data-stage-map-index="1" data-stage-map-action="start">
+          <span class="stage-node-label">STAGE 2 <span class="stage-node-badge">開始</span></span>
           <span class="stage-node-image-wrap">
             <img class="stage-node-image" src="assets/base-enemy-stage-2-beach-castle.png" alt="">
           </span>
           <span class="stage-node-copy">
             <span class="stage-node-chapter">海辺編</span>
-            <span class="stage-node-name">ざぶざぶビーチ防衛戦は準備中</span>
-            <span class="stage-node-meta">次のアップデートで開放予定</span>
+            <span class="stage-node-name">ざぶざぶビーチ防衛戦</span>
+            <span class="stage-node-meta">波打ちぎわの敵拠点をこわそう</span>
           </span>
         </button>
         <button id="lockedStage2" class="stage-node stage-node-locked" data-stage-map-index="2" data-stage-map-action="locked">
@@ -632,7 +632,8 @@ button:disabled {
       enemyStage4: "assets/base-enemy-stage-4-ghost-castle.png"
     }),
     backgrounds: Object.freeze({
-      earthWanwan: "assets/stage-earth-wanwan-background.png"
+      earthWanwan: "assets/stage-earth-wanwan-background.png",
+      beach: "assets/stage-beach-background.png"
     }),
     allies: Object.freeze({
       neko: "assets/ally-neko.png",
@@ -648,7 +649,6 @@ button:disabled {
 
   const ALLY_BASE_SPRITE = GAME_ASSETS.bases.ally;
   const FUTURE_ENEMY_BASE_SPRITES = Object.freeze([
-    GAME_ASSETS.bases.enemyStage2,
     GAME_ASSETS.bases.enemyStage3,
     GAME_ASSETS.bases.enemyStage4
   ]);
@@ -679,6 +679,32 @@ button:disabled {
         { kind: "nyoro", weight: 20 },
         { kind: "trio", weight: 10 }
       ]
+    },
+    {
+      id: "beach-defense-01",
+      chapter: "海辺編",
+      name: "ざぶざぶビーチ防衛戦",
+      startMoney: 180,
+      allyBaseHp: 100,
+      enemyBaseHp: 95,
+      targetExperience: 120,
+      clearBonus: 150,
+      background: GAME_ASSETS.backgrounds.beach,
+      enemyBaseSprite: GAME_ASSETS.bases.enemyStage2,
+      enemyDefeatExperience: {
+        pyoko: 18,
+        nyoro: 30,
+        trio: 26
+      },
+      baseHitExperienceRate: 1,
+      enemySpawnFirstMs: 2300,
+      enemySpawnBaseMs: 4700,
+      enemySpawnMinMs: 3400,
+      enemySpawnTable: [
+        { kind: "pyoko", weight: 55 },
+        { kind: "nyoro", weight: 30 },
+        { kind: "trio", weight: 15 }
+      ]
     }
   ];
 
@@ -693,10 +719,11 @@ button:disabled {
       buttonId: "startStage0"
     },
     {
-      id: "beach-preview-01",
+      id: "beach-defense-01",
       chapter: "海辺編",
-      name: "ざぶざぶビーチ防衛戦は準備中",
-      status: "locked",
+      name: "ざぶざぶビーチ防衛戦",
+      status: "playable",
+      stageIndex: 1,
       baseSprite: GAME_ASSETS.bases.enemyStage2,
       buttonId: "lockedStage1"
     },
@@ -1043,7 +1070,7 @@ button:disabled {
       button.dataset.stageMapAction = node.status === "playable" ? "start" : "locked";
       button.setAttribute("aria-label", node.status === "playable" ? `${node.name}を開始` : `${node.name}。準備中`);
     });
-    updateStageMapStatus("1ステージ目を選んで開始できます。2〜4ステージ目は準備中です。");
+    updateStageMapStatus("1〜2ステージ目を選んで開始できます。3〜4ステージ目は準備中です。");
   }
 
   function updateStageMapStatus(message) {

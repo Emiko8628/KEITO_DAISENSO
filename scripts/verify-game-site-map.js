@@ -65,14 +65,14 @@ assert(
   readme.includes("Stage 2: `海辺編 / ざぶざぶビーチ防衛戦`") &&
     readme.includes("Stage 3: `森編 / もりもり迷いのこみち`") &&
     readme.includes("Stage 4: `おばけ屋敷編 / ふわふわおばけの夜道`"),
-  "README must document the current Stage 2-4 preview plan"
+  "README must document playable Stage 2 and locked Stage 3 through Stage 4 plan"
 );
 
 assert(
-  siteMap.includes("Stage 2 playable") &&
-    siteMap.includes("GAME_ASSETS.backgrounds.beach") &&
-    siteMap.includes("Stage 3 `もりもり迷いのこみち` and Stage 4 `ふわふわおばけの夜道` locked"),
-  "site map must document the next Stage 2 playable boundary"
+  siteMap.includes("Stage 3 playable prep") &&
+    siteMap.includes("Stage 1 and Stage 2 are playable") &&
+    siteMap.includes("Keep Stage 4 `ふわふわおばけの夜道` locked"),
+  "site map must document the next Stage 3 prep boundary"
 );
 
 assert(

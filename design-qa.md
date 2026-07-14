@@ -20,7 +20,7 @@ The focused side-by-side comparison uses the original HUD crop and a same-size c
 - Fonts and typography: Existing game font stack, weight, letter spacing, and HUD hierarchy are unchanged. Restart uses the existing bold UI type at 11px.
 - Spacing and layout rhythm: Restart and audience are separated by a 6px gap and fit within the existing 256px HUD board. The summon deck remains a five-column, two-row-ready area.
 - Colors and visual tokens: Restart uses the existing dark panel, white foreground, and subdued border colors. The audience status colors are unchanged.
-- Image quality and asset fidelity: `assets/ally-ashinaga-umi-neko.png` is replaced byte-for-byte from the supplied image and renders in the existing summon-card and canvas sprite paths.
+- Image quality and asset fidelity: `assets/ally-ashinaga-umi-neko-v3.png` preserves the supplied character while using real alpha transparency around and between the legs. It renders in the existing summon-card and canvas sprite paths.
 - Copy and content: `↻ リスタート`, `参戦中`, money, defeat count, stage copy, and privacy copy remain clear and unchanged in meaning.
 
 ## Findings

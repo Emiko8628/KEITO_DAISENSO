@@ -356,7 +356,7 @@ assert.deepStrictEqual(
     summonCooldownMs: 3600,
     rewardOnWin: 0,
     color: "#a5d8ff",
-    sprite: "assets/ally-ashinaga-umi-neko.png",
+    sprite: "assets/ally-ashinaga-umi-neko-v3.png",
     spriteWidth: 46,
     spriteHeight: 98
   },
@@ -433,7 +433,7 @@ assert.strictEqual(
 );
 assert.strictEqual(
   elements.get("spawnAshinaga").style.values["--summon-icon"],
-  'url("assets/ally-ashinaga-umi-neko.png")',
+  'url("assets/ally-ashinaga-umi-neko-v3.png")',
   "あしながうみネコ summon button should display its unit sprite"
 );
 assert.strictEqual(elements.get("spawnAshinaga").textContent, "あしながうみネコ 140");

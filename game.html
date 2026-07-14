@@ -666,9 +666,9 @@ button:disabled {
       background: GAME_ASSETS.backgrounds.earthWanwan,
       enemyBaseSprite: GAME_ASSETS.bases.enemyStage1,
       enemyDefeatExperience: {
-        pyoko: 18,
-        nyoro: 30,
-        trio: 26
+        beachPyoko: 20,
+        beachNyoro: 32,
+        beachTrio: 28
       },
       baseHitExperienceRate: 1,
       enemySpawnFirstMs: 2600,
@@ -701,9 +701,9 @@ button:disabled {
       enemySpawnBaseMs: 4700,
       enemySpawnMinMs: 3400,
       enemySpawnTable: [
-        { kind: "pyoko", weight: 55 },
-        { kind: "nyoro", weight: 30 },
-        { kind: "trio", weight: 15 }
+        { kind: "beachPyoko", weight: 55 },
+        { kind: "beachNyoro", weight: 30 },
+        { kind: "beachTrio", weight: 15 }
       ]
     }
   ];
@@ -828,6 +828,45 @@ button:disabled {
       speed: 0.36,
       cooldown: 72,
       reward: 36,
+      color: "#ffa8a8",
+      sprite: GAME_ASSETS.enemies.trio,
+      spriteWidth: 68,
+      spriteHeight: 54
+    },
+    beachPyoko: {
+      label: "うみぴょこネコ",
+      hp: 44,
+      attack: 8,
+      range: 30,
+      speed: 0.53,
+      cooldown: 60,
+      reward: 27,
+      color: "#ff8787",
+      sprite: GAME_ASSETS.enemies.pyoko,
+      spriteWidth: 58,
+      spriteHeight: 44
+    },
+    beachNyoro: {
+      label: "しおかぜゴースト",
+      hp: 88,
+      attack: 12,
+      range: 34,
+      speed: 0.3,
+      cooldown: 76,
+      reward: 46,
+      color: "#f06595",
+      sprite: GAME_ASSETS.enemies.nyoro,
+      spriteWidth: 46,
+      spriteHeight: 74
+    },
+    beachTrio: {
+      label: "なみのりトリオ",
+      hp: 66,
+      attack: 15,
+      range: 36,
+      speed: 0.38,
+      cooldown: 70,
+      reward: 40,
       color: "#ffa8a8",
       sprite: GAME_ASSETS.enemies.trio,
       spriteWidth: 68,

@@ -19,7 +19,7 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 | Stage data | `STAGES` in `game.html` | Stage 1 and Stage 2 are playable. Stage 3〜4 base images are prepared as local locked-preview assets, but battle data is not expanded yet. |
 | Stage map | `STAGE_MAP` in `game.html` | Shows Stage 1 and Stage 2 as playable, and Stage 3〜4 as locked previews. Design basis: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md). |
 | Ally unit data | `UNIT_TYPES` in `game.html` | Three summon buttons: `まるねこ 50`, `かたいねこ 80`, `こうげきねこ 110`. |
-| Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | Stage 1 keeps the approved easy-readable enemy mix. Stage 2 keeps the same enemy types with a slightly faster beach-stage mix. |
+| Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | Stage 1 keeps the approved easy-readable enemy mix. Stage 2 uses named enemy variants with slightly stronger stats and the same readable roles. |
 | Battle state | `state` in `game.html` | Money, base HP, EXP, defeats, units, enemies, effects, cooldowns, and result state are in memory only. |
 | Win condition | `checkResult()` in `game.html` | Destroying the left enemy base clears the selected stage. EXP reaching the stage target is only a progress notice, not a clear condition. |
 | Display rendering | Canvas drawing functions in `game.html` | Castle HP appears as `current / max` above bases. Character HP bars and battle floating numbers are intentionally hidden. |

@@ -235,20 +235,61 @@ contains(
 
 contains(
   script,
-  '{ kind: "pyoko", weight: 55 }',
-  "second stage pyoko spawn weight"
+  'label: "うみぴょこネコ"',
+  "second stage pyoko variant label"
 );
 
 contains(
   script,
-  '{ kind: "nyoro", weight: 30 }',
-  "second stage nyoro spawn weight"
+  'label: "しおかぜゴースト"',
+  "second stage nyoro variant label"
 );
 
 contains(
   script,
-  '{ kind: "trio", weight: 15 }',
-  "second stage trio spawn weight"
+  'label: "なみのりトリオ"',
+  "second stage trio variant label"
+);
+
+contains(
+  script,
+  'beachPyoko: 20',
+  "second stage pyoko variant experience"
+);
+
+contains(
+  script,
+  'beachNyoro: 32',
+  "second stage nyoro variant experience"
+);
+
+contains(
+  script,
+  'beachTrio: 28',
+  "second stage trio variant experience"
+);
+
+contains(
+  script,
+  '{ kind: "beachPyoko", weight: 55 }',
+  "second stage pyoko variant spawn weight"
+);
+
+contains(
+  script,
+  '{ kind: "beachNyoro", weight: 30 }',
+  "second stage nyoro variant spawn weight"
+);
+
+contains(
+  script,
+  '{ kind: "beachTrio", weight: 15 }',
+  "second stage trio variant spawn weight"
+);
+
+assert(
+  !script.includes("spriteTint") && !script.includes('globalCompositeOperation = "source-atop"'),
+  "stage 2 enemy variants should not tint or recolor existing sprites"
 );
 
 contains(

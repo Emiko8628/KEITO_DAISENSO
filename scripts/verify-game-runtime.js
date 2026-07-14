@@ -268,6 +268,7 @@ const scriptWithProbe = scriptMatch[1].replace(
     "    addExperience,",
     "    checkResult,",
     "    getStageMap: () => STAGE_MAP,",
+    "    getEnemyTypes: () => ENEMY_TYPES,",
     "    getSelectedStageIndex: () => selectedStageIndex,",
     "    isBattleActive: () => battleActive,",
     "    getAnalyticsConfig: () => ANALYTICS_CONFIG,",
@@ -318,6 +319,28 @@ assert.strictEqual(stage2Elements.get("money").textContent, "180");
 assert.strictEqual(stage2Elements.get("experience").textContent, "0 / 120");
 assert.strictEqual(stage2Sandbox.__keitoRuntimeProbe.getState().enemyBaseHp, 95, "stage 2 should use its enemy base HP");
 assert.strictEqual(stage2Sandbox.__keitoRuntimeProbe.getState().targetExperience, 120, "stage 2 should use its EXP target");
+assert.deepStrictEqual(
+  stage2Sandbox.__keitoRuntimeProbe.getState().enemySpawnTimer,
+  2300,
+  "stage 2 should use its faster first enemy timing"
+);
+assert.deepStrictEqual(
+  JSON.parse(JSON.stringify(stage2Sandbox.__keitoRuntimeProbe.getEnemyTypes().beachPyoko)),
+  {
+    label: "うみぴょこネコ",
+    hp: 44,
+    attack: 8,
+    range: 30,
+    speed: 0.53,
+    cooldown: 60,
+    reward: 27,
+    color: "#ff8787",
+    sprite: "assets/enemy-pyoko-neko.png",
+    spriteWidth: 58,
+    spriteHeight: 44
+  },
+  "stage 2 should define a slightly stronger pyoko variant without recoloring the sprite"
+);
 assert.match(
   stage2Elements.get("message").innerHTML,
   /海辺編、ざぶざぶビーチ防衛戦/,

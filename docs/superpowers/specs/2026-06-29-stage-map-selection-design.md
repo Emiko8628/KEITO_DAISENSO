@@ -25,7 +25,8 @@ This spec records the current stage-map state after making Stage 2 `ざぶざぶ
 | Stage map visual surface | `stageMap`, `battleView`, `renderStageMap()`, `showStageMap()`, `showBattleView()` in `game.html` | Complete |
 | Stage 1 playable node | `earth-wanwan-01` in `STAGE_MAP` with `status: "playable"` and `stageIndex: 0` | Complete |
 | Stage 2 playable node | `beach-defense-01` in `STAGE_MAP` with `status: "playable"`, `stageIndex: 1`, and `assets/base-enemy-stage-2-beach-castle.png` | Complete |
-| Stage 2 enemy variants | `beachPyoko`, `beachNyoro`, `beachTrio`, and `beachAshinaga` in `ENEMY_TYPES`, using dedicated local sprites with stronger stats | Complete |
+| Stage 2 enemy variants | `beachPyoko`, `beachNyoro`, and `beachTrio` in `ENEMY_TYPES`, using dedicated local sprites with stronger stats | Complete |
+| Fourth ally unit | `あしながうみネコ` in `UNIT_TYPES`, using `assets/ally-ashinaga-umi-neko.png`; the summon deck is prepared for a future 5x2, 10-ally team layout with restart outside the deck | Complete |
 | Stage 3 locked preview | `forest-preview-01`, `森編`, `もりもり迷いのこみちは準備中`, `assets/base-enemy-stage-3-forest-castle.png` | Complete |
 | Stage 4 locked preview | `ghost-night-preview-01`, `おばけ屋敷編`, `ふわふわおばけの夜道は準備中`, `assets/base-enemy-stage-4-ghost-castle.png` | Complete |
 | Shared ally base art | `assets/base-ally-blue-castle-v2.png` through `GAME_ASSETS.bases.ally` | Complete |
@@ -157,18 +158,16 @@ Recommended Stage 2 balance:
   enemyDefeatExperience: {
     beachPyoko: 20,
     beachNyoro: 32,
-    beachTrio: 28,
-    beachAshinaga: 36
+    beachTrio: 28
   },
   baseHitExperienceRate: 1,
   enemySpawnFirstMs: 2300,
   enemySpawnBaseMs: 4700,
   enemySpawnMinMs: 3400,
   enemySpawnTable: [
-    { kind: "beachPyoko", weight: 50 },
-    { kind: "beachNyoro", weight: 27 },
-    { kind: "beachTrio", weight: 15 },
-    { kind: "beachAshinaga", weight: 8 }
+    { kind: "beachPyoko", weight: 55 },
+    { kind: "beachNyoro", weight: 30 },
+    { kind: "beachTrio", weight: 15 }
   ]
 }
 ```
@@ -236,9 +235,12 @@ The Stage 2 playable PR verifies:
 - Stage 2 enemy base HP is `95`.
 - Stage 2 target experience is `120`.
 - Stage 2 clear bonus is `150`.
-- Stage 2 uses beach enemy variants `beachPyoko`, `beachNyoro`, `beachTrio`, and `beachAshinaga`.
+- Stage 2 uses beach enemy variants `beachPyoko`, `beachNyoro`, and `beachTrio`.
+- `あしながうみネコ` remains an ally unit in `UNIT_TYPES`, not an enemy unit in `ENEMY_TYPES`.
 - Ordinary hit shockwave effects stay hidden; battle damage remains internal and only base HP numbers are shown.
-- Stage 2 enemy spawn weights are `50 / 27 / 15 / 8`.
+- Ordinary hit flash effects stay hidden; battle damage remains internal.
+- Stage 2 enemy spawn weights are `55 / 30 / 15`.
+- The summon deck remains a 5-column, 2-row-ready ally team area, and restart remains outside that deck.
 - Restart restarts the selected playable stage.
 - Stage 3 and Stage 4 remain locked.
 - Existing analytics event names remain `game_open`, `first_summon`, and `stage_clear`.

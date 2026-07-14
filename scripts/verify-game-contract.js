@@ -18,13 +18,13 @@ const requiredEnemySprites = [
 const requiredBeachEnemySprites = [
   { name: "うみぴょこネコ", file: "assets/enemy-beach-pyoko-neko.png", assetRef: "GAME_ASSETS.enemies.beachPyoko" },
   { name: "しおかぜゴースト", file: "assets/enemy-beach-nyoro-ghost.png", assetRef: "GAME_ASSETS.enemies.beachNyoro" },
-  { name: "なみのりトリオ", file: "assets/enemy-beach-wachawacha-trio.png", assetRef: "GAME_ASSETS.enemies.beachTrio" },
-  { name: "あしながうみネコ", file: "assets/enemy-beach-ashinaga-neko.png", assetRef: "GAME_ASSETS.enemies.beachAshinaga" }
+  { name: "なみのりトリオ", file: "assets/enemy-beach-wachawacha-trio.png", assetRef: "GAME_ASSETS.enemies.beachTrio" }
 ];
 const requiredAllySprites = [
   { name: "まるねこ", file: "assets/ally-neko.png", assetRef: "GAME_ASSETS.allies.neko", buttonId: "spawnNeko", buttonText: "まるねこ 50" },
   { name: "かたいねこ", file: "assets/ally-tank-neko.png", assetRef: "GAME_ASSETS.allies.tank", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
-  { name: "こうげきねこ", file: "assets/ally-battle-neko.png", assetRef: "GAME_ASSETS.allies.battle", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" }
+  { name: "こうげきねこ", file: "assets/ally-battle-neko.png", assetRef: "GAME_ASSETS.allies.battle", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" },
+  { name: "あしながうみネコ", file: "assets/ally-ashinaga-umi-neko.png", assetRef: "GAME_ASSETS.allies.ashinaga", buttonId: "spawnAshinaga", buttonText: "あしながうみネコ 140" }
 ];
 const requiredStageBackgrounds = [
   {
@@ -262,7 +262,7 @@ contains(
 contains(
   script,
   'label: "あしながうみネコ"',
-  "second stage ashinaga variant label"
+  "ashinaga ally label"
 );
 
 [
@@ -271,8 +271,7 @@ contains(
   ["わちゃわちゃトリオ", "hp: 64", "attack: 15"],
   ["うみぴょこネコ", "hp: 50", "attack: 9"],
   ["しおかぜゴースト", "hp: 96", "attack: 14"],
-  ["なみのりトリオ", "hp: 74", "attack: 17"],
-  ["あしながうみネコ", "hp: 92", "attack: 20"]
+  ["なみのりトリオ", "hp: 74", "attack: 17"]
 ].forEach(([label, hp, attack]) => {
   const labelIndex = script.indexOf(`label: "${label}"`);
   assert(labelIndex >= 0, `${label} enemy label must exist`);
@@ -280,6 +279,25 @@ contains(
   contains(enemyBlock, hp, `${label} tuned HP`);
   contains(enemyBlock, attack, `${label} tuned attack`);
 });
+
+[
+  ["あしながうみネコ", "cost: 140", "hp: 120", "attack: 30", "range: 58"]
+].forEach(([label, cost, hp, attack, range]) => {
+  const labelIndex = script.indexOf(`label: "${label}"`);
+  assert(labelIndex >= 0, `${label} ally label must exist`);
+  const allyBlock = script.slice(labelIndex, script.indexOf("}", labelIndex));
+  contains(allyBlock, cost, `${label} ally cost`);
+  contains(allyBlock, hp, `${label} ally HP`);
+  contains(allyBlock, attack, `${label} ally attack`);
+  contains(allyBlock, range, `${label} ally range`);
+});
+
+assert(
+  !script.includes("beachAshinaga") &&
+    !script.includes("enemy-beach-ashinaga-neko.png") &&
+    !fs.existsSync("assets/enemy-beach-ashinaga-neko.png"),
+  "あしながうみネコ must not remain an enemy definition or enemy asset"
+);
 
 contains(
   script,
@@ -319,19 +337,13 @@ contains(
 
 contains(
   script,
-  'beachAshinaga: 36',
-  "second stage ashinaga variant experience"
-);
-
-contains(
-  script,
-  '{ kind: "beachPyoko", weight: 50 }',
+  '{ kind: "beachPyoko", weight: 55 }',
   "second stage pyoko variant spawn weight"
 );
 
 contains(
   script,
-  '{ kind: "beachNyoro", weight: 27 }',
+  '{ kind: "beachNyoro", weight: 30 }',
   "second stage nyoro variant spawn weight"
 );
 
@@ -339,12 +351,6 @@ contains(
   script,
   '{ kind: "beachTrio", weight: 15 }',
   "second stage trio variant spawn weight"
-);
-
-contains(
-  script,
-  '{ kind: "beachAshinaga", weight: 8 }',
-  "second stage ashinaga variant spawn weight"
 );
 
 assert(
@@ -1011,6 +1017,14 @@ assert(
 );
 
 assert(
+  !script.includes("hitFlash") &&
+    !script.includes("brightness(1.7)") &&
+    !script.includes("ctx.filter =") &&
+    !script.includes("drawCharacterSprite(fighter,"),
+  "hit flash should stay disabled"
+);
+
+assert(
   !script.includes("addFloatingText") &&
     !script.includes("floatingTexts") &&
     !script.includes("drawFloatingTexts"),
@@ -1126,8 +1140,44 @@ contains(
 
 contains(
   html,
+  'class="battle-controls"',
+  "battle control wrapper"
+);
+
+contains(
+  html,
   'class="summon-deck"',
   "summon card deck"
+);
+
+contains(
+  html,
+  'aria-label="味方チーム"',
+  "summon deck accessibility label"
+);
+
+contains(
+  html,
+  "grid-template-columns: repeat(5, minmax(116px, 1fr))",
+  "summon deck should be prepared for a 5-column team layout"
+);
+
+contains(
+  html,
+  "grid-auto-rows: minmax(72px, auto)",
+  "summon deck should be prepared for a second ally team row"
+);
+
+contains(
+  html,
+  'class="command-row"',
+  "restart command row"
+);
+
+contains(
+  html,
+  'aria-label="バトル操作"',
+  "command row accessibility label"
 );
 
 contains(
@@ -1162,8 +1212,26 @@ contains(
 
 contains(
   script,
+  'updateSummonButton("ashinaga", ui.spawnAshinaga)',
+  "あしながうみネコ summon UI updater"
+);
+
+contains(
+  script,
   "function updateCooldownBars",
   "cooldown bars without countdown text"
+);
+
+contains(
+  script,
+  '["ashinaga", ui.spawnAshinaga]',
+  "あしながうみネコ cooldown bar binding"
+);
+
+contains(
+  script,
+  'ui.spawnAshinaga.addEventListener("click", () => spawnUnit("ashinaga"));',
+  "あしながうみネコ summon click binding"
 );
 
 assert(

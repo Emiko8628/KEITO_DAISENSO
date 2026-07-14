@@ -44,7 +44,7 @@ const implementedEvidence = [
   "beachPyoko",
   "beachNyoro",
   "beachTrio",
-  "beachAshinaga",
+  "ally-ashinaga-umi-neko.png",
   "game_open` remains once per page session",
   "scripts/verify-game-contract.js",
   "scripts/verify-game-runtime.js",

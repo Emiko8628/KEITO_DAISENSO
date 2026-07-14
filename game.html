@@ -331,14 +331,24 @@ canvas {
   background: #101923;
 }
 
-.summon-deck {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(132px, 1fr));
-  gap: 10px;
-  padding: 12px 14px;
+.battle-controls {
   border-top: 1px solid var(--line);
   background:
     linear-gradient(180deg, #252d3c 0%, #161c27 100%);
+}
+
+.summon-deck {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(116px, 1fr));
+  grid-auto-rows: minmax(72px, auto);
+  gap: 10px;
+  padding: 12px 14px 8px;
+}
+
+.command-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 14px 12px;
 }
 
 button {
@@ -402,6 +412,8 @@ button:disabled {
 }
 
 .command-card {
+  width: min(220px, 100%);
+  min-height: 48px;
   background:
     linear-gradient(180deg, rgba(102, 217, 239, 0.42) 0%, rgba(102, 217, 239, 0.1) 42%, #202737 43%, #151a24 100%);
 }
@@ -445,7 +457,13 @@ button:disabled {
   .summon-deck {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    padding: 10px;
+    padding: 10px 10px 8px;
+  }
+  .command-row {
+    padding: 0 10px 10px;
+  }
+  .command-card {
+    width: 100%;
   }
   button {
     min-height: 60px;
@@ -571,11 +589,16 @@ button:disabled {
         </div>
       </div>
       <canvas id="game" width="960" height="480"></canvas>
-      <div class="summon-deck">
-        <button id="spawnNeko" class="summon-card">まるねこ 50</button>
-        <button id="spawnTank" class="summon-card">かたいねこ 80</button>
-        <button id="spawnBattle" class="summon-card">こうげきねこ 110</button>
-        <button id="restart" class="command-card">リスタート</button>
+      <div class="battle-controls">
+        <div class="summon-deck" aria-label="味方チーム">
+          <button id="spawnNeko" class="summon-card">まるねこ 50</button>
+          <button id="spawnTank" class="summon-card">かたいねこ 80</button>
+          <button id="spawnBattle" class="summon-card">こうげきねこ 110</button>
+          <button id="spawnAshinaga" class="summon-card">あしながうみネコ 140</button>
+        </div>
+        <div class="command-row" aria-label="バトル操作">
+          <button id="restart" class="command-card">リスタート</button>
+        </div>
       </div>
       <div class="message" id="message">
         右の陣地からユニットを召喚して、左の敵拠点をこわそう。
@@ -610,6 +633,7 @@ button:disabled {
     spawnNeko: document.getElementById("spawnNeko"),
     spawnTank: document.getElementById("spawnTank"),
     spawnBattle: document.getElementById("spawnBattle"),
+    spawnAshinaga: document.getElementById("spawnAshinaga"),
     restart: document.getElementById("restart")
   };
 
@@ -672,7 +696,8 @@ button:disabled {
     allies: Object.freeze({
       neko: "assets/ally-neko.png",
       tank: "assets/ally-tank-neko.png",
-      battle: "assets/ally-battle-neko.png"
+      battle: "assets/ally-battle-neko.png",
+      ashinaga: "assets/ally-ashinaga-umi-neko.png"
     }),
     enemies: Object.freeze({
       pyoko: "assets/enemy-pyoko-neko.png",
@@ -680,8 +705,7 @@ button:disabled {
       trio: "assets/enemy-wachawacha-trio.png",
       beachPyoko: "assets/enemy-beach-pyoko-neko.png",
       beachNyoro: "assets/enemy-beach-nyoro-ghost.png",
-      beachTrio: "assets/enemy-beach-wachawacha-trio.png",
-      beachAshinaga: "assets/enemy-beach-ashinaga-neko.png"
+      beachTrio: "assets/enemy-beach-wachawacha-trio.png"
     })
   });
 
@@ -732,18 +756,16 @@ button:disabled {
       enemyDefeatExperience: {
         beachPyoko: 20,
         beachNyoro: 32,
-        beachTrio: 28,
-        beachAshinaga: 36
+        beachTrio: 28
       },
       baseHitExperienceRate: 1,
       enemySpawnFirstMs: 2300,
       enemySpawnBaseMs: 4700,
       enemySpawnMinMs: 3400,
       enemySpawnTable: [
-        { kind: "beachPyoko", weight: 50 },
-        { kind: "beachNyoro", weight: 27 },
-        { kind: "beachTrio", weight: 15 },
-        { kind: "beachAshinaga", weight: 8 }
+        { kind: "beachPyoko", weight: 55 },
+        { kind: "beachNyoro", weight: 30 },
+        { kind: "beachTrio", weight: 15 }
       ]
     }
   ];
@@ -830,6 +852,21 @@ button:disabled {
       sprite: GAME_ASSETS.allies.battle,
       spriteWidth: 64,
       spriteHeight: 58
+    },
+    ashinaga: {
+      label: "あしながうみネコ",
+      cost: 140,
+      hp: 120,
+      attack: 30,
+      range: 58,
+      speed: 0.46,
+      cooldown: 62,
+      summonCooldownMs: 3600,
+      rewardOnWin: 0,
+      color: "#a5d8ff",
+      sprite: GAME_ASSETS.allies.ashinaga,
+      spriteWidth: 46,
+      spriteHeight: 98
     }
   };
 
@@ -911,19 +948,6 @@ button:disabled {
       sprite: GAME_ASSETS.enemies.beachTrio,
       spriteWidth: 78,
       spriteHeight: 58
-    },
-    beachAshinaga: {
-      label: "あしながうみネコ",
-      hp: 92,
-      attack: 20,
-      range: 44,
-      speed: 0.42,
-      cooldown: 74,
-      reward: 48,
-      color: "#74c0fc",
-      sprite: GAME_ASSETS.enemies.beachAshinaga,
-      spriteWidth: 44,
-      spriteHeight: 92
     }
   };
 
@@ -1102,7 +1126,8 @@ button:disabled {
       summonCooldowns: {
         neko: 0,
         tank: 0,
-        battle: 0
+        battle: 0,
+        ashinaga: 0
       },
       elapsed: 0,
       enemySpawnTimer: stage.enemySpawnFirstMs,
@@ -1202,8 +1227,7 @@ button:disabled {
       color: type.color,
       sprite: type.sprite || null,
       spriteWidth: type.spriteWidth || null,
-      spriteHeight: type.spriteHeight || null,
-      hitFlash: 0
+      spriteHeight: type.spriteHeight || null
     };
   }
 
@@ -1441,13 +1465,11 @@ button:disabled {
 
   function updateFighter(actor, dt) {
     actor.cooldown = Math.max(0, actor.cooldown - dt);
-    actor.hitFlash = Math.max(0, actor.hitFlash - dt);
 
     const { target, distance } = findTarget(actor);
     if (target && distance <= actor.range + target.width * 0.5) {
       if (actor.cooldown <= 0) {
         target.hp -= actor.attack;
-        target.hitFlash = 8;
         actor.cooldown = actor.cooldownMax;
       }
       return;
@@ -1580,6 +1602,7 @@ button:disabled {
     updateSummonButton("neko", ui.spawnNeko);
     updateSummonButton("tank", ui.spawnTank);
     updateSummonButton("battle", ui.spawnBattle);
+    updateSummonButton("ashinaga", ui.spawnAshinaga);
     updateCooldownBars();
   }
 
@@ -1595,7 +1618,8 @@ button:disabled {
     [
       ["neko", ui.spawnNeko],
       ["tank", ui.spawnTank],
-      ["battle", ui.spawnBattle]
+      ["battle", ui.spawnBattle],
+      ["ashinaga", ui.spawnAshinaga]
     ].forEach(([kind, button]) => {
       const type = UNIT_TYPES[kind];
       const remaining = state.gameOver ? 0 : state.summonCooldowns[kind];
@@ -1742,13 +1766,12 @@ button:disabled {
   }
 
   function drawFighter(fighter) {
-    const pulse = fighter.hitFlash > 0 ? 1 : 0;
     ctx.save();
     ctx.translate(fighter.x, fighter.y);
 
     drawFighterShadow(fighter);
-    ctx.fillStyle = pulse ? "#ffffff" : fighter.color;
-    drawCharacterSprite(fighter, pulse);
+    ctx.fillStyle = fighter.color;
+    drawCharacterSprite(fighter);
 
     ctx.restore();
   }
@@ -1773,14 +1796,12 @@ button:disabled {
     ctx.stroke();
   }
 
-  function drawCharacterSprite(fighter, pulse) {
+  function drawCharacterSprite(fighter) {
     const sprite = fighter.sprite ? spriteCache.get(fighter.sprite) : null;
     const drawWidth = fighter.spriteWidth || fighter.width;
     const drawHeight = fighter.spriteHeight || fighter.height;
     if (sprite) {
-      ctx.filter = pulse ? "brightness(1.7)" : "none";
       ctx.drawImage(sprite, -drawWidth / 2, -drawHeight, drawWidth, drawHeight);
-      ctx.filter = "none";
       return;
     }
 
@@ -1922,6 +1943,7 @@ button:disabled {
   ui.spawnNeko.addEventListener("click", () => spawnUnit("neko"));
   ui.spawnTank.addEventListener("click", () => spawnUnit("tank"));
   ui.spawnBattle.addEventListener("click", () => spawnUnit("battle"));
+  ui.spawnAshinaga.addEventListener("click", () => spawnUnit("ashinaga"));
   ui.restart.addEventListener("click", resetGame);
 
   loadCharacterSprites();

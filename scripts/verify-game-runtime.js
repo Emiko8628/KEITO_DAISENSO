@@ -302,6 +302,47 @@ elements.get("lockedStage3").click();
 assert.strictEqual(elements.get("stageMap").hidden, false, "locked preview should keep the player on the map");
 assert.strictEqual(elements.get("battleView").hidden, true, "locked preview should not reveal battle controls");
 assert.match(elements.get("stageMapStatus").textContent, /準備中/, "locked preview should explain that the stage is not ready");
+
+const {
+  elements: stage2Elements,
+  sandbox: stage2Sandbox
+} = createRuntime(scriptWithProbe);
+stage2Elements.get("lockedStage1").click();
+assert.strictEqual(stage2Elements.get("stageMap").hidden, true, "starting stage 2 should hide the map");
+assert.strictEqual(stage2Elements.get("battleView").hidden, false, "starting stage 2 should show the battle");
+assert.strictEqual(stage2Sandbox.__keitoRuntimeProbe.isBattleActive(), true, "starting stage 2 should enable battle simulation");
+assert.strictEqual(stage2Sandbox.__keitoRuntimeProbe.getSelectedStageIndex(), 1, "stage 2 should select STAGES[1]");
+assert.strictEqual(stage2Elements.get("stageChapter").textContent, "海辺編");
+assert.strictEqual(stage2Elements.get("stageName").textContent, "ざぶざぶビーチ防衛戦");
+assert.strictEqual(stage2Elements.get("money").textContent, "180");
+assert.strictEqual(stage2Elements.get("experience").textContent, "0 / 120");
+assert.strictEqual(stage2Sandbox.__keitoRuntimeProbe.getState().enemyBaseHp, 95, "stage 2 should use its enemy base HP");
+assert.strictEqual(stage2Sandbox.__keitoRuntimeProbe.getState().targetExperience, 120, "stage 2 should use its EXP target");
+assert.match(
+  stage2Elements.get("message").innerHTML,
+  /海辺編、ざぶざぶビーチ防衛戦/,
+  "stage 2 opening message should use its chapter and stage name"
+);
+stage2Elements.get("restart").click();
+assert.strictEqual(stage2Sandbox.__keitoRuntimeProbe.getSelectedStageIndex(), 1, "stage 2 restart should keep STAGES[1] selected");
+assert.strictEqual(stage2Elements.get("experience").textContent, "0 / 120", "stage 2 restart should reset stage 2 experience display");
+stage2Elements.get("spawnNeko").click();
+assert.deepStrictEqual(
+  JSON.parse(JSON.stringify(
+    stage2Sandbox.__keitoRuntimeProbe
+      .getTrackedEvents()
+      .find((event) => event[0] === "event" && event[1] === "first_summon")[2]
+  )),
+  {
+    stageId: "beach-defense-01",
+    chapter: "海辺編",
+    stageName: "ざぶざぶビーチ防衛戦",
+    unitKind: "neko",
+    unitLabel: "まるねこ"
+  },
+  "stage 2 first_summon should send only allowlisted stage and unit props"
+);
+
 elements.get("startStage0").click();
 assert.strictEqual(elements.get("stageMap").hidden, true, "starting stage 1 should hide the map");
 assert.strictEqual(elements.get("battleView").hidden, false, "starting stage 1 should show the battle");

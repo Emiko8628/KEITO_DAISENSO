@@ -20,7 +20,18 @@ const requiredAllySprites = [
   { name: "かたいねこ", file: "assets/ally-tank-neko.png", assetRef: "GAME_ASSETS.allies.tank", buttonId: "spawnTank", buttonText: "かたいねこ 80" },
   { name: "こうげきねこ", file: "assets/ally-battle-neko.png", assetRef: "GAME_ASSETS.allies.battle", buttonId: "spawnBattle", buttonText: "こうげきねこ 110" }
 ];
-const requiredStageBackground = "assets/stage-earth-wanwan-background.png";
+const requiredStageBackgrounds = [
+  {
+    name: "first stage",
+    file: "assets/stage-earth-wanwan-background.png",
+    assetRef: "GAME_ASSETS.backgrounds.earthWanwan"
+  },
+  {
+    name: "second stage",
+    file: "assets/stage-beach-background.png",
+    assetRef: "GAME_ASSETS.backgrounds.beach"
+  }
+];
 const requiredBaseSprites = [
   "assets/base-ally-blue-castle-v2.png",
   "assets/base-enemy-stage-1-gold-castle-v2.png",
@@ -129,16 +140,14 @@ contains(
   "first stage name"
 );
 
-assert(
-  fs.existsSync(requiredStageBackground),
-  `missing first stage background asset: ${requiredStageBackground}`
-);
-
-contains(
-  script,
-  "background: GAME_ASSETS.backgrounds.earthWanwan",
-  "first stage background image"
-);
+for (const background of requiredStageBackgrounds) {
+  assert(
+    fs.existsSync(background.file),
+    `missing ${background.name} background asset: ${background.file}`
+  );
+  contains(script, background.file, `${background.name} background asset path`);
+  contains(script, `background: ${background.assetRef}`, `${background.name} background image`);
+}
 
 contains(
   script,
@@ -168,6 +177,78 @@ contains(
   script,
   "enemySpawnBaseMs: 5200",
   "first course enemy pacing"
+);
+
+contains(
+  script,
+  'id: "beach-defense-01"',
+  "second stage id"
+);
+
+contains(
+  script,
+  'chapter: "海辺編"',
+  "second chapter name"
+);
+
+contains(
+  script,
+  'name: "ざぶざぶビーチ防衛戦"',
+  "second stage name"
+);
+
+contains(
+  script,
+  "targetExperience: 120",
+  "second stage experience target"
+);
+
+contains(
+  script,
+  "enemyBaseHp: 95",
+  "second stage enemy base HP"
+);
+
+contains(
+  script,
+  "clearBonus: 150",
+  "second stage clear bonus"
+);
+
+contains(
+  script,
+  "enemySpawnFirstMs: 2300",
+  "second stage first enemy pacing"
+);
+
+contains(
+  script,
+  "enemySpawnBaseMs: 4700",
+  "second stage enemy pacing"
+);
+
+contains(
+  script,
+  "enemySpawnMinMs: 3400",
+  "second stage minimum enemy pacing"
+);
+
+contains(
+  script,
+  '{ kind: "pyoko", weight: 55 }',
+  "second stage pyoko spawn weight"
+);
+
+contains(
+  script,
+  '{ kind: "nyoro", weight: 30 }',
+  "second stage nyoro spawn weight"
+);
+
+contains(
+  script,
+  '{ kind: "trio", weight: 15 }',
+  "second stage trio spawn weight"
 );
 
 contains(
@@ -344,14 +425,20 @@ contains(
 
 contains(
   script,
-  'id: "beach-preview-01"',
-  "stage map second preview node id"
+  'id: "beach-defense-01"',
+  "stage map second playable node id"
 );
 
 contains(
   script,
   'chapter: "海辺編"',
-  "stage map second preview chapter"
+  "stage map second playable chapter"
+);
+
+contains(
+  script,
+  "stageIndex: 1",
+  "stage map second playable node should point to the second real stage"
 );
 
 contains(
@@ -405,7 +492,7 @@ contains(
 contains(
   html,
   'id="lockedStage1"',
-  "locked second stage preview control"
+  "second stage start control"
 );
 
 contains(

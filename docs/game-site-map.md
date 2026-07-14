@@ -7,7 +7,7 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 | Surface | File | Public role | Current behavior |
 | --- | --- | --- | --- |
 | Entry page | `index.html` | GitHub Pages entrypoint | Shows a small fallback page and immediately redirects to `game.html`. |
-| Game page | `game.html` | Primary playable experience | Shows the stage map first, then runs the first playable mini tower-defense stage. |
+| Game page | `game.html` | Primary playable experience | Shows the stage map first, then runs Stage 1 or Stage 2 as playable mini tower-defense stages. |
 | Repository overview | `README.md` | Development and gameplay explanation | Describes controls, stage rules, characters, privacy-sensitive behavior, and current implementation notes. |
 | Live audience Worker | `workers/live-audience.mjs` | Real-access audience counter backend | Receives anonymous heartbeat signals and returns the current active count. |
 | Worker config | `wrangler.toml` | Cloudflare deployment config | Defines Durable Object binding, allowed origins, and TTL for audience counting. |
@@ -16,12 +16,12 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 
 | Responsibility | Current owner | Notes |
 | --- | --- | --- |
-| Stage data | `STAGES` in `game.html` | One playable stage exists. Stage 2〜4 base images are prepared as local locked-preview assets, but battle data is not expanded yet. |
-| Stage map | `STAGE_MAP` in `game.html` | Shows Stage 1 as playable and Stage 2〜4 as locked previews without adding new battle data. Design basis: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md). |
+| Stage data | `STAGES` in `game.html` | Stage 1 and Stage 2 are playable. Stage 3〜4 base images are prepared as local locked-preview assets, but battle data is not expanded yet. |
+| Stage map | `STAGE_MAP` in `game.html` | Shows Stage 1 and Stage 2 as playable, and Stage 3〜4 as locked previews. Design basis: [Stage Map And Selection Design](superpowers/specs/2026-06-29-stage-map-selection-design.md). |
 | Ally unit data | `UNIT_TYPES` in `game.html` | Three summon buttons: `まるねこ 50`, `かたいねこ 80`, `こうげきねこ 110`. |
-| Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | First stage keeps the approved easy-readable enemy mix: frequent low-HP enemy, slower sturdy enemy, occasional variety enemy. |
+| Enemy unit data | `ENEMY_TYPES` and stage spawn table in `game.html` | Stage 1 keeps the approved easy-readable enemy mix. Stage 2 keeps the same enemy types with a slightly faster beach-stage mix. |
 | Battle state | `state` in `game.html` | Money, base HP, EXP, defeats, units, enemies, effects, cooldowns, and result state are in memory only. |
-| Win condition | `checkResult()` in `game.html` | Destroying the left enemy base clears the stage. EXP reaching 100 is only a progress notice, not a clear condition. |
+| Win condition | `checkResult()` in `game.html` | Destroying the left enemy base clears the selected stage. EXP reaching the stage target is only a progress notice, not a clear condition. |
 | Display rendering | Canvas drawing functions in `game.html` | Castle HP appears as `current / max` above bases. Character HP bars and battle floating numbers are intentionally hidden. |
 | Summon controls | `.summon-deck` buttons in `game.html` | Buttons show unit name and cost, with cooldown progress in the button bar. |
 | Analytics | `ANALYTICS_CONFIG` and tracking helpers in `game.html` | Google Analytics sends only allowed game events and safe string properties. |
@@ -50,9 +50,9 @@ This map is the responsibility-level guide for the current KEITO_DAISENSO site. 
 
 ## Next Improvement Queue
 
-1. **Stage 2 playable**
-   - Make `海辺編 / ざぶざぶビーチ防衛戦` playable by adding `assets/stage-beach-background.png`, `GAME_ASSETS.backgrounds.beach`, and `STAGES[1]`.
-   - Keep Stage 3 `もりもり迷いのこみち` and Stage 4 `ふわふわおばけの夜道` locked.
+1. **Stage 3 playable prep**
+   - Prepare the boundary for making `森編 / もりもり迷いのこみち` playable without changing Stage 4 yet.
+   - Keep Stage 4 `ふわふわおばけの夜道` locked.
    - Keep existing GA event names, Cloudflare Worker behavior, public URL, and storage-free privacy boundary.
 
 2. **Game data extraction**

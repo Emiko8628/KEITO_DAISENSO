@@ -37,9 +37,11 @@ const implementedEvidence = [
   "assets/base-enemy-stage-2-beach-castle.png",
   "assets/base-enemy-stage-3-forest-castle.png",
   "assets/base-enemy-stage-4-ghost-castle.png",
-  "beach-preview-01",
+  "beach-defense-01",
   "forest-preview-01",
   "ghost-night-preview-01",
+  "assets/stage-beach-background.png",
+  "game_open` remains once per page session",
   "scripts/verify-game-contract.js",
   "scripts/verify-game-runtime.js",
   "scripts/verify-live-audience-worker.js",
@@ -70,17 +72,19 @@ assert(
 
 assert(game.includes("const STAGES = ["), "game must still define STAGES");
 assert(game.includes("stageIndex: 0"), "game must keep the Stage 1 playable map node");
+assert(game.includes("stageIndex: 1"), "game must keep the Stage 2 playable map node");
 assert(game.includes("const FUTURE_ENEMY_BASE_SPRITES = Object.freeze"), "game must still keep future enemy base sprites prepared");
-assert(game.includes('id: "beach-preview-01"'), "game must expose the stage 2 beach preview node");
+assert(game.includes('id: "beach-defense-01"'), "game must expose the stage 2 beach playable node");
 assert(game.includes('id: "forest-preview-01"'), "game must expose the stage 3 forest preview node");
 assert(game.includes('id: "ghost-night-preview-01"'), "game must expose the stage 4 ghost-night preview node");
 
+assert(fs.existsSync("assets/stage-beach-background.png"), "stage 2 beach background asset must exist");
 assert(fs.existsSync("assets/base-enemy-stage-2-beach-castle.png"), "stage 2 beach preview base asset must exist");
 assert(fs.existsSync("assets/base-enemy-stage-3-forest-castle.png"), "stage 3 forest preview base asset must exist");
 assert(fs.existsSync("assets/base-enemy-stage-4-ghost-castle.png"), "stage 4 ghost-night preview base asset must exist");
 
-const stage2PlayableReadiness = [
-  "Stage 2 Playable Readiness",
+const stage2PlayableImplementation = [
+  "Stage 2 Playable Implementation",
   "assets/stage-beach-background.png",
   "GAME_ASSETS.backgrounds.beach",
   "STAGES[1]",
@@ -89,8 +93,8 @@ const stage2PlayableReadiness = [
   "Stage 3 and Stage 4 must remain locked"
 ];
 
-for (const readiness of stage2PlayableReadiness) {
-  assert(spec.includes(readiness), `stage-map design must document Stage 2 playable readiness: ${readiness}`);
+for (const implemented of stage2PlayableImplementation) {
+  assert(spec.includes(implemented), `stage-map design must document Stage 2 playable implementation: ${implemented}`);
 }
 
 assert(

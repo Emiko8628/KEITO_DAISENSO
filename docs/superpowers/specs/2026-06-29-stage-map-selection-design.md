@@ -2,44 +2,44 @@
 
 Date: 2026-06-29
 Updated: 2026-07-14
-Scope: KEITO_DAISENSO stage-map, locked-preview, and Stage 2 playable readiness design. This spec does not change `game.html` behavior by itself.
+Scope: KEITO_DAISENSO stage-map, locked-preview, and Stage 2 playable design.
 
 ## Purpose
 
-The game has one playable stage, a `STAGES` data structure, `state.stageIndex`, a stage-map surface, and local castle assets for the next preview nodes. The responsibility boundary is:
+The game has two playable stages, a `STAGES` data structure, `state.stageIndex`, a stage-map surface, and local castle assets for the next preview nodes. The responsibility boundary is:
 
 - `STAGES` is the battle source of truth.
 - `STAGE_MAP` is the map, navigation, and locked-preview source of truth.
 - `GAME_ASSETS` is the local asset registry for bases, backgrounds, allies, and enemies.
 
-This spec records the current stage-map state and the safe requirements for the next implementation step: making Stage 2 `ざぶざぶビーチ防衛戦` playable without opening unrelated analytics, Worker, storage, URL, or VPS surfaces.
+This spec records the current stage-map state after making Stage 2 `ざぶざぶビーチ防衛戦` playable without opening unrelated analytics, Worker, storage, URL, or VPS surfaces.
 
 ## Already Implemented
 
 | Responsibility | Existing evidence | Status |
 | --- | --- | --- |
 | First playable stage | `STAGES[0]` in `game.html` | Complete |
+| Second playable stage | `STAGES[1]` with `beach-defense-01`, `海辺編`, `ざぶざぶビーチ防衛戦`, and `assets/stage-beach-background.png` | Complete |
 | Stage runtime pointer | `state.stageIndex`, `selectedStageIndex`, and `currentStage()` in `game.html` | Present |
 | First stage UI labels | `stageChapter`, `stageName`, stage intro overlay | Complete |
 | Stage map visual surface | `stageMap`, `battleView`, `renderStageMap()`, `showStageMap()`, `showBattleView()` in `game.html` | Complete |
 | Stage 1 playable node | `earth-wanwan-01` in `STAGE_MAP` with `status: "playable"` and `stageIndex: 0` | Complete |
-| Stage 2 locked preview | `beach-preview-01`, `海辺編`, `ざぶざぶビーチ防衛戦は準備中`, `assets/base-enemy-stage-2-beach-castle.png` | Complete |
+| Stage 2 playable node | `beach-defense-01` in `STAGE_MAP` with `status: "playable"`, `stageIndex: 1`, and `assets/base-enemy-stage-2-beach-castle.png` | Complete |
 | Stage 3 locked preview | `forest-preview-01`, `森編`, `もりもり迷いのこみちは準備中`, `assets/base-enemy-stage-3-forest-castle.png` | Complete |
 | Stage 4 locked preview | `ghost-night-preview-01`, `おばけ屋敷編`, `ふわふわおばけの夜道は準備中`, `assets/base-enemy-stage-4-ghost-castle.png` | Complete |
 | Shared ally base art | `assets/base-ally-blue-castle-v2.png` through `GAME_ASSETS.bases.ally` | Complete |
+| Analytics counting decision | `game_open` remains once per page session. `first_summon` and `stage_clear` use the selected stage props. No new event names or payload keys are added. | Complete |
 | Safety gates | `scripts/verify-game-contract.js`, `scripts/verify-game-runtime.js`, `scripts/verify-live-audience-worker.js`, `scripts/verify-game-site-map.js` | Present |
 
 ## Not Implemented Yet
 
 | Responsibility | Required next owner |
 | --- | --- |
-| Stage 2 battle data | `STAGES[1]` in `game.html` |
-| Stage 2 background asset | `assets/stage-beach-background.png` referenced by `GAME_ASSETS.backgrounds.beach` |
-| Stage 2 playable map node | `STAGE_MAP` should move the Stage 2 beach node from `locked` to `playable` and point it to `stageIndex: 1` |
-| Stage 2 runtime tests | `scripts/verify-game-runtime.js` should prove Stage 2 starts, restarts, and uses Stage 2 values |
-| Stage 2 contract tests | `scripts/verify-game-contract.js` should prove Stage 2 data, background, enemy base, and spawn table are present |
-| Stage 3 and Stage 4 locked-state tests | Runtime tests should continue proving Stage 3 and Stage 4 remain non-playable |
-| Analytics counting decision | Keep existing event names. Decide whether current one-per-page flags are acceptable before creating multi-stage navigation in one page session |
+| Stage 3 battle data | Future `STAGES[2]` in `game.html` |
+| Stage 3 background asset | Future forest background referenced by `GAME_ASSETS.backgrounds.forest` |
+| Stage 3 playable map node | Future `STAGE_MAP` update from `locked` to `playable` with `stageIndex: 2` |
+| Stage 3 runtime and contract tests | Future tests should prove Stage 3 starts, restarts, and uses Stage 3 values |
+| Stage 4 locked-state tests | Runtime tests should continue proving Stage 4 remains non-playable |
 | Persistence | No save data |
 
 ## Recommended Approach
@@ -50,15 +50,15 @@ Current player flow:
 
 1. Player lands on `game.html`.
 2. The stage map appears first.
-3. Stage 1 is playable.
-4. Stage 2, Stage 3, and Stage 4 appear as `準備中` locked previews.
-5. Pressing Stage 1 starts the current battle.
+3. Stage 1 and Stage 2 are playable.
+4. Stage 3 and Stage 4 appear as `準備中` locked previews.
+5. Pressing Stage 1 or Stage 2 starts the selected battle.
 6. Restart remains scoped to the selected playable stage.
 
-Next player flow after the Stage 2 playable PR:
+Current player flow after the Stage 2 playable PR:
 
 1. Stage 1 remains playable.
-2. Stage 2 becomes playable as `海辺編 / ざぶざぶビーチ防衛戦`.
+2. Stage 2 is playable as `海辺編 / ざぶざぶビーチ防衛戦`.
 3. Stage 3 and Stage 4 must remain locked.
 4. Restart on Stage 2 restarts Stage 2, not Stage 1.
 5. Existing public URL remains `game.html`.
@@ -89,10 +89,11 @@ const STAGE_MAP = [
     baseSprite: GAME_ASSETS.bases.enemyStage1
   },
   {
-    id: "beach-preview-01",
+    id: "beach-defense-01",
     chapter: "海辺編",
-    name: "ざぶざぶビーチ防衛戦は準備中",
-    status: "locked",
+    name: "ざぶざぶビーチ防衛戦",
+    status: "playable",
+    stageIndex: 1,
     baseSprite: GAME_ASSETS.bases.enemyStage2
   },
   {
@@ -121,11 +122,11 @@ Rules:
 - `STAGE_MAP` remains the map and navigation source of truth.
 - `GAME_ASSETS` remains the asset source of truth.
 
-## Stage 2 Playable Readiness
+## Stage 2 Playable Implementation
 
-The Stage 2 playable PR should make only Stage 2 playable. It should not make Stage 3 or Stage 4 playable.
+The Stage 2 playable PR makes only Stage 2 playable. It does not make Stage 3 or Stage 4 playable.
 
-Required data additions:
+Implemented data:
 
 - Add `assets/stage-beach-background.png`.
 - Add `GAME_ASSETS.backgrounds.beach`.
@@ -182,7 +183,7 @@ Required map update:
 }
 ```
 
-Stage 3 and Stage 4 must remain locked.
+Stage 3 and Stage 4 remain locked.
 
 ## Runtime Boundary
 
@@ -218,7 +219,7 @@ function startStage(stageIndex) {
 
 ## Verification Requirements
 
-The Stage 2 playable PR should add or update verification for:
+The Stage 2 playable PR verifies:
 
 - Stage map metadata contains two playable stages and two locked preview nodes.
 - Every playable node points to an existing `STAGES` index.
@@ -250,4 +251,4 @@ The Stage 2 playable PR should add or update verification for:
 
 ## Recommended Next Implementation
 
-The next code PR should implement only Stage 2 `ざぶざぶビーチ防衛戦` as playable. It should keep Stage 3 `もりもり迷いのこみち` and Stage 4 `ふわふわおばけの夜道` locked.
+The next code PR should prepare Stage 3 `もりもり迷いのこみち` safely. It should keep Stage 4 `ふわふわおばけの夜道` locked until Stage 4 has its own battle data and tests.

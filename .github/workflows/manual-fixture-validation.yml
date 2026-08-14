@@ -1,0 +1,33 @@
+name: Manual fixture validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Fixture-only suite to run without external effects
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - game-runtime
+          - worker-runtime
+          - design-evidence
+
+permissions:
+  contents: read
+
+jobs:
+  validate-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository content
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run allowlisted local-only fixtures
+        env:
+          FIXTURE_SUITE: ${{ inputs.suite }}
+        run: node scripts/ci/run-manual-fixtures.js --suite "$FIXTURE_SUITE"

@@ -20,6 +20,7 @@ assert.deepStrictEqual(
 const sources = Object.fromEntries(
   workflowFiles.map((file) => [file, fs.readFileSync(path.join(workflowDirectory, file), "utf8")])
 );
+const pinnedCheckout = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1";
 
 for (const [file, source] of Object.entries(sources)) {
   assert(!/^\s*push\s*:/m.test(source), `${file} must not have a push trigger`);
@@ -29,6 +30,7 @@ for (const [file, source] of Object.entries(sources)) {
   assert(!/secrets\s*\./.test(source), `${file} must not read repository secrets`);
   assert.match(source, /permissions:\n  contents: read\n/, `${file} must grant only contents read`);
   assert.match(source, /persist-credentials: false/, `${file} must not retain the GitHub token in git config`);
+  assert(source.includes(pinnedCheckout), `${file} must pin the reviewed Node.js 24 checkout release`);
 }
 
 const pr = sources["pr-validation.yml"];

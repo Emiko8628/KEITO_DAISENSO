@@ -30,6 +30,6 @@ JavaScript uses a changed-file-only `node --check` ratchet because this reposito
 
 ## Authority boundary
 
-Both new workflows are validation-only. They do not read secrets and contain no production, Pages, Cloudflare, Wrangler, VPS, SSH, database, environment mutation, notification, send, or deployment command. Fixture success proves only local contract conformity and does not grant publication or operational authority.
+Both new workflows are validation-only. They pin the reviewed Node.js 24 checkout release and do not persist its credentials. They do not read secrets and contain no production, Pages, Cloudflare, Wrangler, VPS, SSH, database, environment mutation, notification, send, or deployment command. Fixture success proves only local contract conformity and does not grant publication or operational authority.
 
 The GitHub-managed legacy Pages workflow is not stored in `.github/workflows/` and cannot be removed by reorganizing repository workflow files. Disabling or changing it requires a GitHub Pages setting change and would alter the existing public deployment owner, so this change leaves it untouched. Consequently, a merge to `main` may still create one GitHub-managed dynamic Pages run even though repository-authored push triggers are zero.
